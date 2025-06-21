@@ -32,6 +32,7 @@ export default function APIKey() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="text-center"
+          as="div"
         >
           <h1 className="text-4xl font-bold text-gray-900">
             API Key Management
@@ -46,6 +47,7 @@ export default function APIKey() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
           className="mt-12"
+          as="div"
         >
           <div className="bg-white/60 backdrop-blur-lg rounded-2xl border border-gray-100 p-8 shadow-xl shadow-indigo-100/20">
             <div className="space-y-8">

@@ -80,12 +80,16 @@
 
   /* Custom Button Styles */
   .btn-primary {
-    @apply relative inline-flex items-center justify-center px-6 py-3 overflow-hidden text-white rounded-lg group bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 transition-all duration-300;
+    @apply relative inline-flex items-center justify-center px-6 py-3 overflow-hidden text-white rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 transition-all duration-300;
   }
 
   .btn-primary::after {
-    @apply absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-600 to-indigo-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300;
     content: '';
+    @apply absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-600 to-indigo-400 opacity-0 transition-opacity duration-300;
+  }
+
+  .btn-primary:hover::after {
+    @apply opacity-20;
   }
 
   .btn-secondary {
@@ -108,8 +112,8 @@
   }
 
   .card-hover::after {
-    @apply absolute inset-0 border-2 border-indigo-500/0 rounded-2xl transition-all duration-300;
     content: '';
+    @apply absolute inset-0 border-2 border-indigo-500/0 rounded-2xl transition-all duration-300;
   }
 
   .card-hover:hover::after {

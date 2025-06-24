@@ -90,6 +90,93 @@ export default function Home() {
         </div>
       </section>
 
+      {/* API Section */}
+      <section className="py-20 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-purple-50/30 to-white/0 backdrop-blur-sm" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center animate-fade-in">
+            <h2 className="text-4xl font-bold text-gray-900">
+              Powerful API Integration
+            </h2>
+            <p className="mt-4 text-xl text-gray-600">
+              Integrate Essai's writing analysis capabilities directly into your applications
+            </p>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div className="space-y-6 animate-fade-in-up">
+              <div className="space-y-4">
+                <h3 className="text-2xl font-semibold text-gray-900">Simple Integration</h3>
+                <p className="text-gray-600">
+                  Get started quickly with our RESTful API. Analyze essays, get feedback, and track progress programmatically.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-gray-700">Comprehensive documentation</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-gray-700">Secure authentication</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-gray-700">Rate limiting and usage monitoring</span>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Link
+                  href="/key"
+                  className="inline-flex items-center px-6 py-3 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                >
+                  <span>Get Your API Key</span>
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-gray-900 p-6 animate-fade-in-up delay-200">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+              </div>
+              <pre className="text-sm font-mono">
+                <code className="text-indigo-300">
+{`// Example API request
+fetch('https://api.essai.com/v1/analyze', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    text: "Your essay content",
+    type: "analysis"
+  })
+})`}
+                </code>
+              </pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-90" />

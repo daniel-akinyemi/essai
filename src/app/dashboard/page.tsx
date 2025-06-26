@@ -1,9 +1,10 @@
-import { auth } from "@/app/auth";
+import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { authOptions } from "@/app/auth";
 
 export default async function DashboardPage() {
-  const session = await auth();
-  
+  const session = await getServerSession(authOptions);
+
   if (!session?.user) {
     redirect("/auth/signin");
   }

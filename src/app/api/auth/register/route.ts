@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return new NextResponse("User already exists", { status: 400 });
+      return new NextResponse(JSON.stringify({ message: "User already exists" }), { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -30,11 +30,11 @@ export async function POST(req: Request) {
       },
     });
 
-    return new NextResponse("User created successfully", { status: 201 });
+    return new NextResponse(JSON.stringify({ message: "User created successfully" }), { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return new NextResponse("Invalid request data", { status: 422 });
+      return new NextResponse(JSON.stringify({ message: "Invalid request data" }), { status: 422 });
     }
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return new NextResponse(JSON.stringify({ message: "Internal Server Error" }), { status: 500 });
   }
 } 

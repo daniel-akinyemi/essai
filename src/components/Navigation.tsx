@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
 
 export default function Navigation() {
@@ -18,6 +17,10 @@ export default function Navigation() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  if (session) {
+    return null;
+  }
 
   return (
     <nav className={`fixed top-0 w-full z-50 backdrop-blur-lg bg-white/60 border-b border-gray-200 transition-all duration-300 ${
@@ -41,31 +44,14 @@ export default function Navigation() {
             <Link href="/key" className="text-gray-700 hover:text-gray-900">
               API Key
             </Link>
-            {session?.user ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="text-gray-700 hover:text-gray-900"
-                >
-                  Dashboard
-                </Link>
-                <button
-                  onClick={() => signOut()}
-                  className="btn-secondary"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/signin" className="btn-secondary">
-                  Sign In
-                </Link>
-                <Link href="/auth/signup" className="btn-primary">
-                  Sign Up
-                </Link>
-              </>
-            )}
+            <>
+              <Link href="/auth/signin" className="btn-secondary">
+                Sign In
+              </Link>
+              <Link href="/auth/signup" className="btn-primary">
+                Sign Up
+              </Link>
+            </>
           </div>
         </div>
       </div>

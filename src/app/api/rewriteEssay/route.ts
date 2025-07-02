@@ -1,0 +1,95 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/auth';
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { originalEssay, instructions, requestType } = body;
+
+    if (!originalEssay || typeof originalEssay !== 'string') {
+      return NextResponse.json({ error: 'Original essay is required' }, { status: 400 });
+    }
+
+    if (originalEssay.length < 50) {
+      return NextResponse.json({ error: 'Essay must be at least 50 characters long' }, { status: 400 });
+    }
+
+    if (originalEssay.length > 10000) {
+      return NextResponse.json({ error: 'Essay must be less than 10,000 characters' }, { status: 400 });
+    }
+
+    // Lazy load the OpenRouter client to catch initialization errors
+    let openRouterClient;
+    try {
+      const { openRouterClient: client } = await import('@/lib/openrouter');
+      openRouterClient = client;
+    } catch (error) {
+      console.error('Failed to initialize OpenRouter client:', error);
+      return NextResponse.json({ 
+        error: 'OpenRouter service is not properly configured. Please check the API key.' 
+      }, { status: 500 });
+    }
+
+    let result;
+
+    if (requestType === 'suggestions') {
+      result = await openRouterClient.getSuggestions(originalEssay);
+      return NextResponse.json({ 
+        suggestions: result,
+        success: true 
+      });
+    } else {
+      result = await openRouterClient.rewriteEssay(originalEssay, instructions);
+      return NextResponse.json({ 
+        rewrittenEssay: result,
+        originalEssay,
+        instructions: instructions || null,
+        timestamp: new Date().toISOString(),
+        success: true 
+      });
+    }
+
+  } catch (error) {
+    console.error('Essay rewriter API error:', error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes('API key')) {
+        return NextResponse.json({ 
+          error: 'API configuration error. Please contact support.' 
+        }, { status: 500 });
+      }
+      
+      if (error.message.includes('rate limit')) {
+        return NextResponse.json({ 
+          error: 'Rate limit exceeded. Please try again in a few minutes.' 
+        }, { status: 429 });
+      }
+      
+      return NextResponse.json({ 
+        error: `Essay rewriting failed: ${error.message}` 
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ 
+      error: 'An unexpected error occurred while rewriting the essay' 
+    }, { status: 500 });
+  }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}

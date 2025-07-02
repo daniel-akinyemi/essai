@@ -5,7 +5,12 @@
       "Bash(timeout 10 pnpm prisma db push --help)",
       "Bash(ls:*)",
       "Bash(timeout 30 pnpm prisma db push)",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "Bash(node:*)",
+      "Bash(timeout 15 pnpm dev)",
+      "Bash(pnpm install:*)",
+      "Bash(rm:*)",
+      "Bash(timeout 10 pnpm dev)"
     ],
     "deny": []
   }

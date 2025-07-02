@@ -5,8 +5,8 @@ import { useState } from "react";
 
 interface StudentTopNavProps {
   onMenuClick: () => void;
-  user: any;
-  onSignOut: () => void;
+  user?: any;
+  onSignOut?: () => void;
 }
 
 export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentTopNavProps) {
@@ -70,7 +70,7 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
               
               <button
                 onClick={() => {
-                  onSignOut();
+                  onSignOut?.();
                   setShowUserMenu(false);
                 }}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"

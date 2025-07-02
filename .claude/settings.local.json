@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm prisma:*)",
+      "Bash(timeout 10 pnpm prisma db push --help)",
+      "Bash(ls:*)",
+      "Bash(timeout 30 pnpm prisma db push)",
+      "Bash(ping:*)"
+    ],
+    "deny": []
+  }
+}

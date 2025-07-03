@@ -38,15 +38,16 @@ export async function POST(request: NextRequest) {
     }
 
     let result;
+    const mistralModel = 'mistralai/mistral-7b-instruct:free';
 
     if (requestType === 'suggestions') {
-      result = await openRouterClient.getSuggestions(originalEssay);
+      result = await openRouterClient.getSuggestions(originalEssay, mistralModel);
       return NextResponse.json({ 
         suggestions: result,
         success: true 
       });
     } else {
-      result = await openRouterClient.rewriteEssay(originalEssay, instructions);
+      result = await openRouterClient.rewriteEssay(originalEssay, instructions, mistralModel);
       return NextResponse.json({ 
         rewrittenEssay: result,
         originalEssay,

@@ -73,7 +73,7 @@ export class OpenRouterClient {
     }
   }
 
-  async rewriteEssay(originalEssay: string, instructions?: string): Promise<string> {
+  async rewriteEssay(originalEssay: string, instructions?: string, model?: string): Promise<string> {
     const systemPrompt = `You are an expert essay writing assistant. Your task is to rewrite essays to improve their quality while maintaining the original meaning and the author's voice. 
 
 Guidelines for rewriting:
@@ -103,10 +103,10 @@ Return ONLY the rewritten essay without any explanations or commentary.`;
       }
     ];
 
-    return this.chatCompletion(messages);
+    return this.chatCompletion(messages, model);
   }
 
-  async getSuggestions(originalEssay: string): Promise<string[]> {
+  async getSuggestions(originalEssay: string, model?: string): Promise<string[]> {
     const systemPrompt = `You are an expert writing coach. Analyze the given essay and provide specific, actionable improvement suggestions. Focus on concrete areas that can be enhanced.
 
 Return exactly 5 suggestions as a JSON array of strings. Each suggestion should be specific and actionable.
@@ -124,7 +124,7 @@ Example format: ["Improve thesis statement clarity", "Add more supporting eviden
       }
     ];
 
-    const response = await this.chatCompletion(messages);
+    const response = await this.chatCompletion(messages, model);
     
     try {
       const suggestions = JSON.parse(response);

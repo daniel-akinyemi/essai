@@ -133,12 +133,49 @@ Example format: ["Improve thesis statement clarity", "Add more supporting eviden
       if (match) {
         return JSON.parse(match[0]);
       }
-      throw new Error('No JSON array found in model response');
+      return null;
+    }
+
+    function extractQuotedSuggestions(text: string): string[] {
+      // Extract lines that look like: 1. "..." or - "..." or numbered suggestions
+      const lines = text.split(/\r?\n/);
+      const suggestions: string[] = [];
+      
+      // First try to extract from numbered/bulleted lists
+      for (const line of lines) {
+        // Match patterns like: 1. "text" or - "text" or "text"
+        const match = line.match(/^[\s\d\-\*\.]*[""]([^""]+)[""]/);
+        if (match && match[1]) {
+          suggestions.push(match[1].trim());
+        }
+      }
+      
+      // If no suggestions found, try extracting from plain text
+      if (suggestions.length === 0) {
+        // Look for any quoted text in the response
+        const quoteMatches = text.match(/[""]([^""]+)[""]/g);
+        if (quoteMatches) {
+          for (const match of quoteMatches) {
+            const content = match.replace(/[""]/g, '').trim();
+            if (content.length > 10) { // Only add substantial suggestions
+              suggestions.push(content);
+            }
+          }
+        }
+      }
+      
+      console.log('Extracted suggestions:', suggestions);
+      return suggestions;
     }
 
     try {
-      const suggestions = extractFirstJsonArray(response);
+      let suggestions = extractFirstJsonArray(response);
       if (Array.isArray(suggestions)) {
+        return suggestions.slice(0, 5);
+      }
+      // Fallback: try extracting quoted suggestions
+      suggestions = extractQuotedSuggestions(response);
+      if (suggestions.length > 0) {
         return suggestions.slice(0, 5);
       }
       throw new Error('Invalid suggestions format');

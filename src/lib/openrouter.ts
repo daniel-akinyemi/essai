@@ -1,4 +1,4 @@
-interface OpenRouterMessage {
+export interface OpenRouterMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
@@ -126,14 +126,25 @@ Example format: ["Improve thesis statement clarity", "Add more supporting eviden
 
     const response = await this.chatCompletion(messages, model);
     
+    function extractFirstJsonArray(text: string): any {
+      // Remove control characters except for newlines and tabs
+      const sanitized = text.replace(/[\u0000-\u001F\u007F-\u009F]/g, c => (c === '\n' || c === '\t') ? c : '');
+      const match = sanitized.match(/\[[\s\S]*?\]/);
+      if (match) {
+        return JSON.parse(match[0]);
+      }
+      throw new Error('No JSON array found in model response');
+    }
+
     try {
-      const suggestions = JSON.parse(response);
+      const suggestions = extractFirstJsonArray(response);
       if (Array.isArray(suggestions)) {
         return suggestions.slice(0, 5);
       }
       throw new Error('Invalid suggestions format');
     } catch (error) {
       console.error('Error parsing suggestions:', error);
+      console.error('Raw AI response:', response);
       return [
         'Improve sentence structure and flow',
         'Enhance vocabulary and word choice',

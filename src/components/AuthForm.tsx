@@ -176,22 +176,30 @@ export default function AuthForm({ mode }: AuthFormProps) {
           </div>
           <div className="mt-6">
             <button
-              onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
               className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              type="button"
             >
               <svg
                 className="w-5 h-5 mr-2"
                 aria-hidden="true"
-                fill="currentColor"
-                viewBox="0 0 20 20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M10 0C4.477 0 0 4.477 0 10c0 4.418 2.865 8.166 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.378.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.942.359.308.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.578.688.482A10.001 10.001 0 0020 10c0-5.523-4.477-10-10-10z"
-                  clipRule="evenodd"
-                />
+                <g clipPath="url(#clip0_17_40)">
+                  <path d="M23.766 12.276c0-.818-.074-1.604-.213-2.356H12.24v4.463h6.48a5.548 5.548 0 01-2.404 3.642v3.017h3.89c2.28-2.1 3.56-5.197 3.56-8.766z" fill="#4285F4"/>
+                  <path d="M12.24 24c3.24 0 5.963-1.07 7.95-2.91l-3.89-3.017c-1.08.726-2.46 1.16-4.06 1.16-3.12 0-5.76-2.104-6.7-4.932H1.54v3.09A11.997 11.997 0 0012.24 24z" fill="#34A853"/>
+                  <path d="M5.54 14.3a7.19 7.19 0 010-4.6V6.61H1.54a12.002 12.002 0 000 10.78l4-3.09z" fill="#FBBC05"/>
+                  <path d="M12.24 4.77c1.76 0 3.34.6 4.58 1.78l3.42-3.42C18.2 1.07 15.48 0 12.24 0A11.997 11.997 0 001.54 6.61l4 3.09c.94-2.828 3.58-4.93 6.7-4.93z" fill="#EA4335"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_17_40">
+                    <rect width="24" height="24" fill="white"/>
+                  </clipPath>
+                </defs>
               </svg>
-              Sign in with Github
+              Sign in with Google
             </button>
           </div>
         </div>

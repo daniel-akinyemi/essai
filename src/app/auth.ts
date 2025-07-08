@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import Credentials from "next-auth/providers/credentials";
-import Github from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 import { z } from "zod";
 import type { NextAuthOptions } from "next-auth";
 
@@ -13,9 +13,9 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
   },
   providers: [
-    Github({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     Credentials({
       name: "credentials",

@@ -166,6 +166,25 @@ function formatFixedEssay(essay: string): string {
   return formatted;
 }
 
+function fallbackParagraphSplit(text: string): string {
+  // Split on sentence boundaries (period, exclamation, question mark followed by space and capital letter)
+  const sentences = text.match(/[^.!?]+[.!?]+\s*/g) || [text];
+  const paragraphs = [];
+  let current = '';
+  let count = 0;
+  for (let i = 0; i < sentences.length; i++) {
+    current += sentences[i];
+    count++;
+    // Group every 2-3 sentences into a paragraph
+    if (count >= 3 || i === sentences.length - 1) {
+      paragraphs.push(current.trim());
+      current = '';
+      count = 0;
+    }
+  }
+  return paragraphs.join('\n\n');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { topic, essay, autoFix = false }: ParagraphRelevanceRequest = await request.json();
@@ -275,6 +294,11 @@ ${autoFix ? 'Please provide both the relevance analysis AND a fixed version of t
   if (analysisResult.fixedEssay) {
     analysisResult.fixedEssay = formatFixedEssay(analysisResult.fixedEssay)
       .replace(/\n{3,}/g, '\n\n'); // Ensure no more than two newlines between paragraphs
+    // Fallback: if still only one paragraph, split into paragraphs by sentences
+    if (!analysisResult.fixedEssay.includes('\n\n')) {
+      analysisResult.fixedEssay = fallbackParagraphSplit(analysisResult.fixedEssay);
+      analysisResult.fixedEssay = formatFixedEssay(analysisResult.fixedEssay);
+    }
   }
 
   return NextResponse.json(analysisResult);

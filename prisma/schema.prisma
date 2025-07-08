@@ -19,6 +19,7 @@ model User {
   updatedAt DateTime  @updatedAt
   accounts  Account[]
   sessions  Session[]
+  essays    Essay[]
 
   @@map("users")
 }
@@ -59,4 +60,18 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model Essay {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic         String
+  content       String
+  type          String
+  score         Int
+  feedback      String
+  submittedAt   DateTime @default(now())
+
+  @@map("essays")
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Edit3, Sparkles, RefreshCw, Copy, Download, ArrowRight, Lightbulb, AlertCircle, CheckCircle, Loader2, RotateCcw, Settings } from "lucide-react";
+import { useSession } from 'next-auth/react';
 
 interface RewriteResult {
   rewrittenEssay: string;
@@ -26,6 +27,10 @@ export default function EssayRewriterPage() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'rewrite' | 'compare'>('rewrite');
   const [copySuccess, setCopySuccess] = useState(false);
+  const { data: session } = useSession();
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const handleRewriteEssay = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +118,33 @@ export default function EssayRewriterPage() {
       setError(err instanceof Error ? err.message : 'An error occurred while getting suggestions');
     } finally {
       setIsLoadingSuggestions(false);
+    }
+  };
+
+  const handleSaveEssay = async () => {
+    if (!rewriteResult) return;
+    setSaving(true);
+    setSaveSuccess(false);
+    setSaveError('');
+    try {
+      const res = await fetch('/api/essays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: originalEssay.slice(0, 120), // Use the original essay's topic or a better way if available
+          content: rewriteResult.rewrittenEssay,
+          type: 'Rewritten',
+          score: 0, // You may want to add scoring logic
+          feedback: instructions || 'Essay rewritten by AI.'
+        })
+      });
+      if (!res.ok) throw new Error('Failed to save essay.');
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (err: any) {
+      setSaveError(err.message || 'Failed to save essay.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -303,8 +335,23 @@ export default function EssayRewriterPage() {
                           <Download className="h-4 w-4" />
                           <span>Download</span>
                         </button>
+                        <button
+                          onClick={handleSaveEssay}
+                          disabled={saving || saveSuccess}
+                          className={`flex items-center space-x-2 px-3 py-2 text-sm rounded-lg transition-colors ${saveSuccess ? 'bg-green-100 text-green-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'} ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {saving ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : saveSuccess ? (
+                            <CheckCircle className="h-4 w-4" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                          <span>{saveSuccess ? 'Saved!' : 'Save to History'}</span>
+                        </button>
                       </div>
                     </div>
+                    {saveError && <div className="text-red-500 text-sm mb-2">{saveError}</div>}
                     <div className="bg-gray-50 rounded-lg p-4 border">
                       <pre className="whitespace-pre-wrap text-gray-900 font-sans">
                         {rewriteResult.rewrittenEssay}

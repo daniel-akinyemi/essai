@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { FileText, Upload, Send, CheckCircle, AlertCircle, Loader2, Star, TrendingUp } from "lucide-react";
+import { useSession } from 'next-auth/react';
 
 interface CleanEssayScore {
   essayTitle: string;
@@ -24,6 +25,10 @@ export default function SubmitEssayPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [score, setScore] = useState<CleanEssayScore | null>(null);
   const [error, setError] = useState('');
+  const { data: session } = useSession();
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +67,34 @@ export default function SubmitEssayPage() {
       setError(err instanceof Error ? err.message : 'An error occurred while scoring your essay');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveEssay = async () => {
+    if (!score) return;
+    setSaving(true);
+    setSaveSuccess(false);
+    setSaveError('');
+    try {
+      const feedback = score.improvementSuggestions.join(' ');
+      const res = await fetch('/api/essays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: score.essayTitle,
+          content,
+          type: 'Scored',
+          score: score.overallScore,
+          feedback,
+        })
+      });
+      if (!res.ok) throw new Error('Failed to save essay.');
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (err: any) {
+      setSaveError(err.message || 'Failed to save essay.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -176,14 +209,28 @@ export default function SubmitEssayPage() {
             <>
               {/* Essay Title and Overall Score */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{score.essayTitle}</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900">{score.essayTitle}</h3>
+                  <button
+                    onClick={handleSaveEssay}
+                    disabled={saving || saveSuccess}
+                    className={`flex items-center space-x-2 px-3 py-1 text-sm rounded-lg transition-colors ${saveSuccess ? 'bg-green-100 text-green-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'} ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : saveSuccess ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <Star className="h-4 w-4" />
+                    )}
+                    <span>{saveSuccess ? 'Saved!' : 'Save to History'}</span>
+                  </button>
+                </div>
+                {saveError && <div className="text-red-500 text-sm mb-2">{saveError}</div>}
                 <p className="text-sm text-gray-500 mb-4">Scored on {score.timestamp}</p>
-                
                 <div className="text-center">
                   <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full ${getScoreBgColor(score.overallScore)} mb-4`}>
-                    <span className={`text-3xl font-bold ${getScoreColor(score.overallScore)}`}>
-                      {score.overallScore}
-                    </span>
+                    <span className={`text-3xl font-bold ${getScoreColor(score.overallScore)}`}>{score.overallScore}</span>
                   </div>
                   <p className="text-2xl font-bold text-gray-900 mb-2">/ 100</p>
                   <p className="text-gray-600">

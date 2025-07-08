@@ -17,5 +17,5 @@ export default function StudentDashboard() {
     );
   }
 
-  return <StudentMainContent activePage="overview" />;
+  return <StudentMainContent activePage="overview" userName={session.user?.name} />;
 } 

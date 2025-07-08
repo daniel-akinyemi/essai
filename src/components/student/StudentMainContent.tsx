@@ -4,14 +4,15 @@ import { FileText, TrendingUp, Clock, Award, BookOpen, Users, Edit3, Sparkles } 
 
 interface StudentMainContentProps {
   activePage: string;
+  userName?: string;
 }
 
-export default function StudentMainContent({ activePage }: StudentMainContentProps) {
+export default function StudentMainContent({ activePage, userName }: StudentMainContentProps) {
   const renderOverview = () => (
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Welcome back, Student! 👋</h1>
+        <h1 className="text-2xl font-bold mb-2">Welcome back, {(userName ? userName.split(' ')[0] : 'Student')}! 👋</h1>
         <p className="text-blue-100">Ready to improve your essay writing skills? Let's get started!</p>
       </div>
 

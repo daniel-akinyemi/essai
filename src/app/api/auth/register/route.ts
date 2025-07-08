@@ -6,12 +6,14 @@ import { z } from "zod";
 const userSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
 });
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password } = userSchema.parse(body);
+    const { email, password, firstName, lastName } = userSchema.parse(body);
 
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -27,6 +29,9 @@ export async function POST(req: Request) {
       data: {
         email: email.toLowerCase(),
         password: hashedPassword,
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`,
       },
     });
 

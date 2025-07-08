@@ -22,6 +22,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
 
     if (mode === "signup" && password !== confirmPassword) {
       setError("Passwords do not match");
@@ -34,7 +36,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, firstName, lastName }),
         });
 
         if (!res.ok) {
@@ -71,6 +73,36 @@ export default function AuthForm({ mode }: AuthFormProps) {
           {mode === "signin" ? "Sign In" : "Create Account"}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === "signup" && (
+            <>
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium mb-2">
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  required
+                  className="w-full px-4 py-2"
+                  placeholder="Enter your first name"
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium mb-2">
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  required
+                  className="w-full px-4 py-2"
+                  placeholder="Enter your last name"
+                />
+              </div>
+            </>
+          )}
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-2">
               Email

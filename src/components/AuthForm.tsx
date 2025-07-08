@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface AuthFormProps {
   mode: "signin" | "signup";
@@ -72,99 +74,96 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <h2 className="text-2xl font-bold text-center mb-6">
           {mode === "signin" ? "Sign In" : "Create Account"}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in-up">
           {mode === "signup" && (
-            <>
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium mb-2">
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label htmlFor="firstName" className="block text-sm font-medium mb-1">
                   First Name
                 </label>
-                <input
+                <Input
                   id="firstName"
                   name="firstName"
                   type="text"
                   required
-                  className="w-full px-4 py-2"
                   placeholder="Enter your first name"
+                  autoComplete="given-name"
                 />
               </div>
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium mb-2">
+              <div className="flex-1">
+                <label htmlFor="lastName" className="block text-sm font-medium mb-1">
                   Last Name
                 </label>
-                <input
+                <Input
                   id="lastName"
                   name="lastName"
                   type="text"
                   required
-                  className="w-full px-4 py-2"
                   placeholder="Enter your last name"
+                  autoComplete="family-name"
                 />
               </div>
-            </>
+            </div>
           )}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-2">
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email
             </label>
-            <input
+            <Input
               id="email"
               name="email"
               type="email"
               required
-              className="w-full px-4 py-2"
               placeholder="Enter your email"
+              autoComplete="email"
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-2">
+            <label htmlFor="password" className="block text-sm font-medium mb-1">
               Password
             </label>
-            <input
+            <Input
               id="password"
               name="password"
               type="password"
               required
-              className="w-full px-4 py-2"
               placeholder="Enter your password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
             />
           </div>
           {mode === "signup" && (
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium mb-2"
-              >
+              <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
                 Confirm Password
               </label>
-              <input
+              <Input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 required
-                className="w-full px-4 py-2"
                 placeholder="Confirm your password"
+                autoComplete="new-password"
               />
             </div>
           )}
           {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
+            <div className="text-red-500 text-sm text-center animate-fade-in">{error}</div>
           )}
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full"
+            className="w-full mt-2"
+            size="lg"
           >
             {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div className="flex items-center justify-center gap-2">
+                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white border-t-2"></span>
+                Signing up...
               </div>
-            ) : mode === "signin" ? (
-              "Sign In"
             ) : (
-              "Sign Up"
+              mode === "signin" ? "Sign In" : "Sign Up"
             )}
-          </button>
+          </Button>
         </form>
         <div className="mt-6">
           <div className="relative">

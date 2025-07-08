@@ -56,7 +56,7 @@ Return ONLY a valid JSON object with this structure. Do not include any text bef
   ]
 }
 
-If autoFix is true, also include a "fixedEssay" field with the full essay where problematic paragraphs are replaced with improved versions. IMPORTANT: Preserve paragraph breaks in the fixedEssay by using double line breaks (\\n\\n) between paragraphs.
+If autoFix is true, also include a "fixedEssay" field with the full essay where problematic paragraphs are replaced with improved versions. IMPORTANT: The fixedEssay MUST be broken into clear, logical academic paragraphs, with each paragraph separated by two line breaks (\n\n). Do NOT return the entire essay as a single block of text. Each paragraph should be a well-structured academic paragraph.
 
 IMPORTANT: 
 - Return ONLY the JSON object, no additional text
@@ -64,7 +64,7 @@ IMPORTANT:
 - Do not include any control characters or special formatting
 - Make sure the JSON is valid and parseable
 - Use flexible relevance checking - don't be overly strict
-- For fixedEssay: Use \\n\\n to separate paragraphs, not single \\n`;
+- For fixedEssay: Use \n\n to separate paragraphs, not single \n, and ensure each paragraph is a logical academic paragraph.`;
 
 function repairJsonString(jsonString: string): string {
   // First, normalize line endings and remove control characters
@@ -273,7 +273,8 @@ ${autoFix ? 'Please provide both the relevance analysis AND a fixed version of t
 
   // Format the fixed essay if it exists
   if (analysisResult.fixedEssay) {
-    analysisResult.fixedEssay = formatFixedEssay(analysisResult.fixedEssay);
+    analysisResult.fixedEssay = formatFixedEssay(analysisResult.fixedEssay)
+      .replace(/\n{3,}/g, '\n\n'); // Ensure no more than two newlines between paragraphs
   }
 
   return NextResponse.json(analysisResult);

@@ -639,7 +639,7 @@ export default function EssayGeneratorPage() {
               {/* Summary */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Analysis Summary</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
                       {paragraphAnalysis.filter(p => p.status === '✅ On-topic').length}
@@ -648,7 +648,7 @@ export default function EssayGeneratorPage() {
                   </div>
                   <div className="text-center p-4 bg-yellow-50 rounded-lg">
                     <div className="text-2xl font-bold text-yellow-600">
-                      {paragraphAnalysis.filter(p => p.status === '🟡 Needs Improvement').length}
+                      {paragraphAnalysis.filter(p => p.status === '🟡 Needs Improvement' || p.status === '⚠️ Somewhat Off-topic').length}
                     </div>
                     <div className="text-sm text-yellow-700">Needs Improvement</div>
                   </div>
@@ -657,6 +657,25 @@ export default function EssayGeneratorPage() {
                       {paragraphAnalysis.filter(p => p.status === '❌ Off-topic').length}
                     </div>
                     <div className="text-sm text-red-700">Off-topic</div>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-600">
+                      {paragraphAnalysis.filter(p => !['✅ On-topic', '🟡 Needs Improvement', '❌ Off-topic', '⚠️ Somewhat Off-topic'].includes(p.status)).length}
+                    </div>
+                    <div className="text-sm text-gray-700">Other</div>
+                    {/* Show unique status strings counted as Other */}
+                    {(() => {
+                      const otherStatuses = Array.from(new Set(paragraphAnalysis
+                        .filter(p => !['✅ On-topic', '🟡 Needs Improvement', '❌ Off-topic', '⚠️ Somewhat Off-topic'].includes(p.status))
+                        .map(p => p.status)));
+                      return otherStatuses.length > 0 ? (
+                        <ul className="mt-2 text-xs text-gray-500 text-left">
+                          {otherStatuses.map((status, idx) => (
+                            <li key={idx}>• {status}</li>
+                          ))}
+                        </ul>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               </div>
@@ -718,7 +737,7 @@ export default function EssayGeneratorPage() {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Fixed Essay</h3>
                   <div className="prose max-w-none">
-                    {fixedEssay.split(/\n{2,}/).map((para, idx) => (
+                    {fixedEssay.split(/\n\s*\n/).map((para, idx) => (
                       <p key={idx} className="mb-4 text-gray-700">{para.trim()}</p>
                     ))}
                   </div>

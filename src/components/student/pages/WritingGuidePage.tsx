@@ -1,124 +1,119 @@
 'use client';
 
-import { BookOpen, Lightbulb, Target, CheckCircle, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { BookOpen, Lightbulb, PenLine, ListOrdered, FileCheck2, Link2, CheckCircle, Sparkles } from "lucide-react";
+
+const writingTips = [
+  {
+    title: "1. Understand the Essay Topic",
+    icon: <BookOpen className="h-6 w-6 text-blue-500" />,
+    points: [
+      "Carefully read the prompt or question.",
+      'Identify action words like “explain,” “compare,” “argue.”',
+      "Restate the topic in your own words.",
+    ],
+    color: "from-blue-100 to-blue-50 border-blue-400"
+  },
+  {
+    title: "2. Plan Before You Write",
+    icon: <PenLine className="h-6 w-6 text-purple-500" />,
+    points: [
+      "Jot down quick ideas (brainstorm).",
+      "Group similar thoughts together.",
+      "Build a simple outline: Introduction, Body (2–3), Conclusion.",
+    ],
+    color: "from-purple-100 to-purple-50 border-purple-400"
+  },
+  {
+    title: "3. Write a Strong Introduction",
+    icon: <Sparkles className="h-6 w-6 text-green-500" />,
+    points: [
+      "Start with a hook (quote, question, or fact).",
+      "Give some background (if needed).",
+      "End with a thesis statement.",
+    ],
+    color: "from-green-100 to-green-50 border-green-400"
+  },
+  {
+    title: "4. Build Body Paragraphs",
+    icon: <FileCheck2 className="h-6 w-6 text-yellow-500" />,
+    points: [
+      "Each paragraph covers one idea.",
+      "Start with a topic sentence.",
+      "Use examples and link back to your thesis.",
+    ],
+    color: "from-yellow-100 to-yellow-50 border-yellow-400"
+  },
+  {
+    title: "5. Use Transitions",
+    icon: <Link2 className="h-6 w-6 text-pink-500" />,
+    points: [
+      "Link ideas clearly using: Moreover, However, For example, etc.",
+    ],
+    color: "from-pink-100 to-pink-50 border-pink-400"
+  },
+  {
+    title: "6. End with a Conclusion",
+    icon: <CheckCircle className="h-6 w-6 text-indigo-500" />,
+    points: [
+      "Summarize key points.",
+      "Restate your thesis in new words.",
+      "End with a final thought or advice.",
+    ],
+    color: "from-indigo-100 to-indigo-50 border-indigo-400"
+  },
+  {
+    title: "7. Proofread & Improve",
+    icon: <Lightbulb className="h-6 w-6 text-teal-500" />,
+    points: [
+      "Check grammar, spelling, and punctuation.",
+      "Ensure clarity and logical flow.",
+      "Did I stay on topic?",
+    ],
+    color: "from-teal-100 to-teal-50 border-teal-400"
+  },
+  {
+    title: "8. Writing Tips",
+    icon: <ListOrdered className="h-6 w-6 text-orange-500" />,
+    points: [
+      "Avoid vague words (thing, stuff, a lot).",
+      "Use strong verbs and varied sentence types.",
+      "Don’t copy – write in your own words.",
+      "Stick to your outline.",
+    ],
+    color: "from-orange-100 to-orange-50 border-orange-400"
+  },
+];
 
 export default function WritingGuidePage() {
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Writing Guide</h1>
-        <p className="text-gray-600">Access comprehensive essay writing tips, guides, and best practices to improve your writing skills.</p>
+    <div className="py-10 px-4 min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-orange-50">
+      <div className="max-w-4xl mx-auto mb-10 text-center">
+        <div className="flex flex-col items-center gap-2 mb-2">
+          <BookOpen className="h-12 w-12 text-blue-600" />
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Essay Writing Guide</h1>
+        </div>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          Master the art of essay writing with these step-by-step strategies and tips. Each card below guides you through a key part of the process.
+        </p>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Tips */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-            <Lightbulb className="h-5 w-5 text-yellow-500" />
-            <span>Quick Tips</span>
-          </h2>
-          <div className="space-y-3">
-            <div className="flex items-start space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-gray-700">Always start with a strong thesis statement</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        {writingTips.map((tip, idx) => (
+          <div
+            key={idx}
+            className={`rounded-2xl shadow-lg border-l-8 bg-gradient-to-br ${tip.color} p-6 transition-transform hover:scale-[1.025] hover:shadow-2xl flex flex-col gap-2`}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              {tip.icon}
+              <h3 className="font-bold text-lg text-gray-900">{tip.title}</h3>
             </div>
-            <div className="flex items-start space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-gray-700">Use clear topic sentences for each paragraph</span>
-            </div>
-            <div className="flex items-start space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-gray-700">Include evidence and examples to support your arguments</span>
-            </div>
-            <div className="flex items-start space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-gray-700">End with a compelling conclusion</span>
-            </div>
+            <ul className="list-disc list-inside text-base text-gray-700 space-y-1 pl-2">
+              {tip.points.map((point, i) => (
+                <li key={i}>{point}</li>
+              ))}
+            </ul>
           </div>
-        </div>
-
-        {/* Essay Structure */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-            <Target className="h-5 w-5 text-blue-500" />
-            <span>Essay Structure</span>
-          </h2>
-          <div className="space-y-4">
-            <div className="border-l-4 border-blue-500 pl-4">
-              <h3 className="font-medium text-gray-900">Introduction</h3>
-              <p className="text-sm text-gray-600">Hook, background, thesis statement</p>
-            </div>
-            <div className="border-l-4 border-green-500 pl-4">
-              <h3 className="font-medium text-gray-900">Body Paragraphs</h3>
-              <p className="text-sm text-gray-600">Topic sentence, evidence, analysis</p>
-            </div>
-            <div className="border-l-4 border-purple-500 pl-4">
-              <h3 className="font-medium text-gray-900">Conclusion</h3>
-              <p className="text-sm text-gray-600">Restate thesis, summarize, closing thoughts</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Common Mistakes */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-            <BookOpen className="h-5 w-5 text-red-500" />
-            <span>Common Mistakes</span>
-          </h2>
-          <div className="space-y-3">
-            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-              <h3 className="font-medium text-red-800 text-sm">Grammar Errors</h3>
-              <p className="text-xs text-red-700">Subject-verb agreement, punctuation</p>
-            </div>
-            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-              <h3 className="font-medium text-red-800 text-sm">Weak Arguments</h3>
-              <p className="text-xs text-red-700">Lack of evidence, logical fallacies</p>
-            </div>
-            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-              <h3 className="font-medium text-red-800 text-sm">Poor Structure</h3>
-              <p className="text-xs text-red-700">Unclear organization, missing transitions</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Coming Soon Section */}
-      <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8 border border-blue-200">
-        <div className="text-center">
-          <BookOpen className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Comprehensive Writing Guide</h2>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            This feature is coming soon! You'll have access to detailed writing guides, 
-            interactive tutorials, and personalized writing tips to help you improve your essay writing skills.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <h3 className="font-semibold text-gray-900 mb-2">What's Coming:</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Interactive writing tutorials</li>
-                <li>• Grammar and style guides</li>
-                <li>• Essay type-specific tips</li>
-                <li>• Citation and formatting guides</li>
-              </ul>
-            </div>
-            
-            <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <h3 className="font-semibold text-gray-900 mb-2">Features:</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Video tutorials</li>
-                <li>• Practice exercises</li>
-                <li>• Progress tracking</li>
-                <li>• Expert writing tips</li>
-              </ul>
-            </div>
-          </div>
-          
-          <button className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2 mx-auto">
-            <ArrowRight className="h-5 w-5" />
-            <span>Coming Soon</span>
-          </button>
-        </div>
+        ))}
       </div>
     </div>
   );

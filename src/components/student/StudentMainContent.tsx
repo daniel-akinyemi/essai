@@ -1,6 +1,7 @@
 'use client';
 
 import { FileText, TrendingUp, Clock, Award, BookOpen, Users, Edit3, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface StudentMainContentProps {
   activePage: string;
@@ -8,6 +9,7 @@ interface StudentMainContentProps {
 }
 
 export default function StudentMainContent({ activePage, userName }: StudentMainContentProps) {
+  const router = useRouter();
   const renderOverview = () => (
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
@@ -72,7 +74,10 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+            <button
+              className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              onClick={() => router.push('/dashboard/student/submit-essay')}
+            >
               <div className="flex items-center space-x-3">
                 <FileText className="h-5 w-5 text-blue-600" />
                 <span className="font-medium">Submit New Essay</span>
@@ -80,7 +85,10 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
               <span className="text-sm text-gray-500">→</span>
             </button>
             
-            <button className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+            <button
+              className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              onClick={() => router.push('/dashboard/student/essay-rewriter')}
+            >
               <div className="flex items-center space-x-3">
                 <Edit3 className="h-5 w-5 text-green-600" />
                 <span className="font-medium">Rewrite Essay</span>
@@ -88,7 +96,10 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
               <span className="text-sm text-gray-500">→</span>
             </button>
             
-            <button className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+            <button
+              className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              onClick={() => router.push('/dashboard/student/assignments')}
+            >
               <div className="flex items-center space-x-3">
                 <BookOpen className="h-5 w-5 text-purple-600" />
                 <span className="font-medium">View Assignments</span>

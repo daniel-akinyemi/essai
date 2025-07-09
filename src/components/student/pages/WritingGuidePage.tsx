@@ -111,7 +111,7 @@ export default function WritingGuidePage() {
               {tip.points.map((point, i) => (
                 <li key={i}>{point}</li>
               ))}
-            </ul>
+              </ul>
           </div>
         ))}
       </div>

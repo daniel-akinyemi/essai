@@ -12,7 +12,7 @@ export default function JoinClassPage() {
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState("");
-  const [classes, setClasses] = useState([]);
+  const [classes, setClasses] = useState<any[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [teacherEmail, setTeacherEmail] = useState("");
   const [joining, setJoining] = useState(false);
@@ -39,7 +39,7 @@ export default function JoinClassPage() {
       const { data, error } = await supabase
         .from("classroom_members")
         .select("classrooms(*), assignments(count)")
-        .eq("user_id", (session.user as any).id);
+        .eq("user_id", (session?.user as any).id);
       if (error) {
         toast.error("Failed to fetch classes");
       } else {
@@ -88,30 +88,40 @@ export default function JoinClassPage() {
         classroom = classes[0];
       }
       // Check if already joined
-      const { data: existing } = await supabase
-        .from("classroom_members")
-        .select("*")
-        .eq("user_id", (session.user as any).id)
-        .eq("classroom_id", classroom.id);
+      let existing = [];
+      if (session?.user) {
+        const { data: existData } = await supabase
+          .from("classroom_members")
+          .select("*")
+          .eq("user_id", (session.user as any).id)
+          .eq("classroom_id", classroom.id);
+        existing = existData || [];
+      }
       if (existing && existing.length > 0) {
         toast("Already joined this class.");
         setJoining(false);
         return;
       }
       // Add to classroom_members
-      const { error: joinErr } = await supabase
-        .from("classroom_members")
-        .insert({ classroom_id: classroom.id, user_id: (session.user as any).id, role: "student" });
+      let joinErr;
+      if (session?.user) {
+        const { error } = await supabase
+          .from("classroom_members")
+          .insert({ classroom_id: classroom.id, user_id: (session.user as any).id, role: "student" });
+        joinErr = error;
+      }
       if (joinErr) throw joinErr;
       toast.success("Successfully joined class!");
       setJoinCode("");
       setTeacherEmail("");
       // Refresh class list
-      const { data, error } = await supabase
-        .from("classroom_members")
-        .select("classrooms(*), assignments(count)")
-        .eq("user_id", (session.user as any).id);
-      if (!error) setClasses(data || []);
+      if (session?.user) {
+        const { data, error } = await supabase
+          .from("classroom_members")
+          .select("classrooms(*), assignments(count)")
+          .eq("user_id", (session.user as any).id);
+        if (!error) setClasses(data || []);
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to join class.");
     } finally {

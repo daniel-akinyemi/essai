@@ -14,6 +14,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState("student");
+  const [inviteCode, setInviteCode] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,10 +37,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
     try {
       if (mode === "signup") {
+        if ((role === "teacher" || role === "school admin") && !inviteCode) {
+          setError("Invite code required for this role");
+          setLoading(false);
+          return;
+        }
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, firstName, lastName }),
+          body: JSON.stringify({ email, password, firstName, lastName, role, inviteCode }),
         });
 
         if (!res.ok) {
@@ -103,6 +110,37 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   autoComplete="family-name"
                 />
               </div>
+            </div>
+          )}
+          {mode === "signup" && (
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium mb-1">Role</label>
+              <select
+                id="role"
+                name="role"
+                value={role}
+                onChange={e => setRole(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg"
+                required
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+                <option value="school admin">School Admin</option>
+              </select>
+            </div>
+          )}
+          {mode === "signup" && (role === "teacher" || role === "school admin") && (
+            <div>
+              <label htmlFor="inviteCode" className="block text-sm font-medium mb-1">Invite Code</label>
+              <Input
+                id="inviteCode"
+                name="inviteCode"
+                type="text"
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value)}
+                required
+                placeholder="Enter invite code for this role"
+              />
             </div>
           )}
           <div>

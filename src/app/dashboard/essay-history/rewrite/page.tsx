@@ -40,7 +40,7 @@ export default function RewritePage() {
           <div className="text-sm text-gray-500 mb-1">Original Essay:</div>
           <div className="bg-gray-50 rounded-lg p-4 mb-2 whitespace-pre-wrap text-gray-800">{essay.content}</div>
         </div>
-        <Button variant="secondary" onClick={() => router.push(`/dashboard/student/essay-rewriter?content=${encodeURIComponent(essay.content)}&topic=${encodeURIComponent(essay.topic)}`)}>
+        <Button variant="secondary" onClick={() => router.push(`/dashboard/essay-rewriter?content=${encodeURIComponent(essay.content)}&topic=${encodeURIComponent(essay.topic)}`)}>
           Rewrite with AI
         </Button>
       </div>

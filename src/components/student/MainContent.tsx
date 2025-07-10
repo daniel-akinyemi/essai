@@ -1,71 +1,68 @@
 'use client';
 
-import { FileText, TrendingUp, Clock, Award, BookOpen, Users, Edit3, Sparkles } from "lucide-react";
+import { FileText, TrendingUp, Clock, Award, BookOpen, Edit3, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-interface StudentMainContentProps {
+interface MainContentProps {
   activePage: string;
   userName?: string;
 }
 
-export default function StudentMainContent({ activePage, userName }: StudentMainContentProps) {
+export default function MainContent({ activePage, userName }: MainContentProps) {
   const router = useRouter();
   const renderOverview = () => (
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Welcome back, {(userName ? userName.split(' ')[0] : 'Student')}! 👋</h1>
-        <p className="text-blue-100">Ready to improve your essay writing skills? Let's get started!</p>
+        <h1 className="text-2xl font-bold mb-2">Welcome{userName ? `, ${userName.split(' ')[0]}` : ''}! 👋</h1>
+        <p className="text-blue-100">Essai helps you evaluate, improve, and generate essays with AI. Get started below!</p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Feature Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Essays Submitted</p>
-              <p className="text-2xl font-bold text-gray-900">12</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FileText className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
+          <FileText className="h-10 w-10 text-blue-600 mb-2" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Essay Scoring</h3>
+          <p className="text-gray-600 mb-4">Get instant, AI-powered feedback and scores for your essays.</p>
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+            onClick={() => router.push('/dashboard/score-essay')}
+          >
+            Score Essay
+          </button>
         </div>
-
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Average Score</p>
-              <p className="text-2xl font-bold text-gray-900">85%</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
+          <Edit3 className="h-10 w-10 text-green-600 mb-2" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Essay Rewriting</h3>
+          <p className="text-gray-600 mb-4">Improve your writing with smart AI rewriting suggestions.</p>
+          <button
+            className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition"
+            onClick={() => router.push('/dashboard/essay-rewriter')}
+          >
+            Rewrite Essay
+          </button>
         </div>
-
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Pending Reviews</p>
-              <p className="text-2xl font-bold text-gray-900">3</p>
-            </div>
-            <div className="p-3 bg-yellow-100 rounded-lg">
-              <Clock className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
+          <Sparkles className="h-10 w-10 text-purple-600 mb-2" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Essay Generation</h3>
+          <p className="text-gray-600 mb-4">Generate high-quality essays on any topic with AI assistance.</p>
+          <button
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition"
+            onClick={() => router.push('/dashboard/essay-generator')}
+          >
+            Generate Essay
+          </button>
         </div>
-
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Best Score</p>
-              <p className="text-2xl font-bold text-gray-900">92%</p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Award className="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
+        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
+          <BookOpen className="h-10 w-10 text-orange-500 mb-2" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Writing Guide</h3>
+          <p className="text-gray-600 mb-4">Access tips, best practices, and guides for better essay writing.</p>
+          <button
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition"
+            onClick={() => router.push('/dashboard/writing-guide')}
+          >
+            Writing Guide
+          </button>
         </div>
       </div>
 
@@ -76,7 +73,7 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
           <div className="space-y-3">
             <button
               className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-              onClick={() => router.push('/dashboard/student/submit-essay')}
+              onClick={() => router.push('/dashboard/score-essay')}
             >
               <div className="flex items-center space-x-3">
                 <FileText className="h-5 w-5 text-blue-600" />
@@ -84,10 +81,9 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
               </div>
               <span className="text-sm text-gray-500">→</span>
             </button>
-            
             <button
               className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-              onClick={() => router.push('/dashboard/student/essay-rewriter')}
+              onClick={() => router.push('/dashboard/essay-rewriter')}
             >
               <div className="flex items-center space-x-3">
                 <Edit3 className="h-5 w-5 text-green-600" />
@@ -95,20 +91,28 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
               </div>
               <span className="text-sm text-gray-500">→</span>
             </button>
-            
             <button
               className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-              onClick={() => router.push('/dashboard/student/assignments')}
+              onClick={() => router.push('/dashboard/essay-generator')}
             >
               <div className="flex items-center space-x-3">
-                <BookOpen className="h-5 w-5 text-purple-600" />
-                <span className="font-medium">View Assignments</span>
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                <span className="font-medium">Generate Essay</span>
+              </div>
+              <span className="text-sm text-gray-500">→</span>
+            </button>
+            <button
+              className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              onClick={() => router.push('/dashboard/writing-guide')}
+            >
+              <div className="flex items-center space-x-3">
+                <BookOpen className="h-5 w-5 text-orange-500" />
+                <span className="font-medium">Writing Guide</span>
               </div>
               <span className="text-sm text-gray-500">→</span>
             </button>
           </div>
         </div>
-
         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
           <div className="space-y-4">
@@ -119,7 +123,6 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
                 <p className="text-xs text-gray-500">"The Impact of Technology on Education" - 2 hours ago</p>
               </div>
             </div>
-            
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               <div className="flex-1">
@@ -127,12 +130,11 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
                 <p className="text-xs text-gray-500">"Climate Change Solutions" - Score: 88% - 1 day ago</p>
               </div>
             </div>
-            
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">Joined class</p>
-                <p className="text-xs text-gray-500">English Literature 101 - 3 days ago</p>
+                <p className="text-sm font-medium text-gray-900">Essay rewritten</p>
+                <p className="text-xs text-gray-500">"Modern Education Systems" - 3 days ago</p>
               </div>
             </div>
           </div>
@@ -217,26 +219,6 @@ export default function StudentMainContent({ activePage, userName }: StudentMain
           {renderPlaceholder(
             'Essay History',
             'View and manage your submitted essays and scores.'
-          )}
-        </main>
-      );
-    
-    case 'assignments':
-      return (
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          {renderPlaceholder(
-            'Assignments',
-            'View and submit assignments from your teachers.'
-          )}
-        </main>
-      );
-    
-    case 'join-class':
-      return (
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          {renderPlaceholder(
-            'Join Class',
-            'Join a class using your class code.'
           )}
         </main>
       );

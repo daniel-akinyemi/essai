@@ -66,4 +66,26 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ essay });
+}
+
+// DELETE: Clear all essays for the logged-in user
+export async function DELETE(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const deletedEssays = await prisma.essay.deleteMany({
+      where: { userId: session.user.id },
+    });
+
+    return NextResponse.json({ 
+      message: 'Essay history cleared successfully',
+      deletedCount: deletedEssays.count 
+    });
+  } catch (error) {
+    console.error('Error clearing essay history:', error);
+    return NextResponse.json({ error: 'Failed to clear essay history' }, { status: 500 });
+  }
 } 

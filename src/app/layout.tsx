@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navigation from "@/components/Navigation";
+import ConditionalNavigation from "@/components/ConditionalNavigation";
 import Providers from "@/components/Providers";
 import ThemeLoader from "@/components/ThemeLoader";
 
@@ -12,7 +12,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Essai - Smart Essay Evaluation Platform",
-  description: "Transform your writing with AI-powered essay evaluation, scoring, and feedback. Perfect for students, teachers, and schools.",
+  description: "Transform your writing with AI-powered essay evaluation, scoring, and feedback. Perfect for students, professionals, and anyone looking to improve their writing skills.",
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>
           <ThemeLoader />
-          <Navigation />
+          <ConditionalNavigation />
           {children}
         </Providers>
       </body>

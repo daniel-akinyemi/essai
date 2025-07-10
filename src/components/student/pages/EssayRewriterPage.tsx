@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Edit3, Sparkles, RefreshCw, Copy, Download, ArrowRight, Lightbulb, AlertCircle, CheckCircle, Loader2, RotateCcw, Settings } from "lucide-react";
+import { Edit3, Sparkles, RefreshCw, Copy, Download, ArrowRight, Lightbulb, AlertCircle, CheckCircle, Loader2, RotateCcw, Settings, Target, Zap, TrendingUp } from "lucide-react";
 import { useSession } from 'next-auth/react';
 
 interface RewriteResult {
@@ -28,9 +28,7 @@ export default function EssayRewriterPage() {
   const [activeTab, setActiveTab] = useState<'rewrite' | 'compare'>('rewrite');
   const [copySuccess, setCopySuccess] = useState(false);
   const { data: session } = useSession();
-  const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState('');
+  const [autoSaveMessage, setAutoSaveMessage] = useState('');
 
   const handleRewriteEssay = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +50,7 @@ export default function EssayRewriterPage() {
 
     setIsLoading(true);
     setError('');
+    setAutoSaveMessage('');
 
     try {
       const response = await fetch('/api/rewriteEssay', {
@@ -74,6 +73,26 @@ export default function EssayRewriterPage() {
       const result: RewriteResult = await response.json();
       setRewriteResult(result);
       setActiveTab('compare');
+      
+      // Automatically save to history
+      try {
+        const res = await fetch('/api/essays', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: originalEssay.slice(0, 120),
+            content: result.rewrittenEssay,
+            type: 'Rewritten',
+            score: 0,
+            feedback: instructions || 'Essay rewritten by AI.'
+          })
+        });
+        if (res.ok) {
+          setAutoSaveMessage('Rewritten essay automatically saved to your history.');
+        }
+      } catch (saveError) {
+        console.error('Failed to auto-save essay:', saveError);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while rewriting your essay');
     } finally {
@@ -121,33 +140,6 @@ export default function EssayRewriterPage() {
     }
   };
 
-  const handleSaveEssay = async () => {
-    if (!rewriteResult) return;
-    setSaving(true);
-    setSaveSuccess(false);
-    setSaveError('');
-    try {
-      const res = await fetch('/api/essays', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: originalEssay.slice(0, 120), // Use the original essay's topic or a better way if available
-          content: rewriteResult.rewrittenEssay,
-          type: 'Rewritten',
-          score: 0, // You may want to add scoring logic
-          feedback: instructions || 'Essay rewritten by AI.'
-        })
-      });
-      if (!res.ok) throw new Error('Failed to save essay.');
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
-    } catch (err: any) {
-      setSaveError(err.message || 'Failed to save essay.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -181,280 +173,306 @@ export default function EssayRewriterPage() {
   const charCount = originalEssay.length;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Essay Rewriter</h1>
-        <p className="text-gray-600">Improve your essays with AI-powered rewriting suggestions and enhancements.</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl mb-6">
+            <Edit3 className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">
+            Essay Rewriter
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Transform your essays with AI-powered rewriting suggestions and enhancements
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Main Input Section */}
-        <div className="xl:col-span-2 space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-              <Edit3 className="h-5 w-5 text-green-600" />
-              <span>Original Essay</span>
-            </h2>
-
-            <form onSubmit={handleRewriteEssay} className="space-y-4">
-              <div>
-                <textarea
-                  value={originalEssay}
-                  onChange={(e) => setOriginalEssay(e.target.value)}
-                  placeholder="Paste your essay here to rewrite and improve it..."
-                  rows={12}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
-                  required
-                />
-                <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                  <span>{charCount} characters • {wordCount} words</span>
-                  <span className={charCount > 10000 ? 'text-red-500' : ''}>
-                    {charCount < 50 ? 'Minimum 50 characters' : `${10000 - charCount} characters remaining`}
-                  </span>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Main Input Section */}
+          <div className="xl:col-span-2 space-y-8">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+              <div className="flex items-center space-x-3 mb-8">
+                <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg">
+                  <Edit3 className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Original Essay</h2>
+                  <p className="text-gray-600">Paste your essay to rewrite and improve</p>
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="instructions" className="block text-sm font-medium text-gray-700 mb-2">
-                  Specific Instructions (Optional)
-                </label>
-                <textarea
-                  id="instructions"
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  placeholder="E.g., 'Make it more formal', 'Improve the conclusion', 'Use more academic vocabulary'..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
-                />
-              </div>
-
-              {error && (
-                <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <span className="text-red-700 text-sm">{error}</span>
+              <form onSubmit={handleRewriteEssay} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Essay Content *
+                  </label>
+                  <textarea
+                    value={originalEssay}
+                    onChange={(e) => setOriginalEssay(e.target.value)}
+                    placeholder="Paste your essay here to rewrite and improve it..."
+                    rows={12}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-none bg-white/50 backdrop-blur-sm"
+                    required
+                  />
+                  <div className="flex justify-between items-center text-sm text-gray-500">
+                    <span>{charCount} characters • {wordCount} words</span>
+                    <span className={charCount > 10000 ? 'text-red-500' : ''}>
+                      {charCount < 50 ? 'Minimum 50 characters' : `${10000 - charCount} characters remaining`}
+                    </span>
+                  </div>
                 </div>
-              )}
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  type="submit"
-                  disabled={isLoading || !originalEssay.trim() || charCount < 50}
-                  className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-colors"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>Rewriting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-5 w-5" />
-                      <span>Rewrite Essay</span>
-                    </>
-                  )}
-                </button>
+                <div className="space-y-2">
+                  <label htmlFor="instructions" className="block text-sm font-semibold text-gray-700">
+                    Specific Instructions (Optional)
+                  </label>
+                  <textarea
+                    id="instructions"
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="E.g., 'Make it more formal', 'Improve the conclusion', 'Use more academic vocabulary'..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 resize-none bg-white/50 backdrop-blur-sm"
+                  />
+                </div>
 
-                <button
-                  type="button"
-                  onClick={handleGetSuggestions}
-                  disabled={isLoadingSuggestions || !originalEssay.trim() || charCount < 50}
-                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-colors"
-                >
-                  {isLoadingSuggestions ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span>Getting Tips...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lightbulb className="h-5 w-5" />
-                      <span>Get Tips</span>
-                    </>
-                  )}
-                </button>
+                {error && (
+                  <div className="flex items-center space-x-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                    <span className="text-red-700 text-sm">{error}</span>
+                  </div>
+                )}
 
-                {(rewriteResult || suggestions.length > 0) && (
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button
+                    type="submit"
+                    disabled={isLoading || !originalEssay.trim() || charCount < 50}
+                    className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Rewriting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5" />
+                        <span>Rewrite Essay</span>
+                      </>
+                    )}
+                  </button>
+
                   <button
                     type="button"
-                    onClick={resetForm}
-                    className="bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 flex items-center justify-center space-x-2 transition-colors"
+                    onClick={handleGetSuggestions}
+                    disabled={isLoadingSuggestions || !originalEssay.trim() || charCount < 50}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
                   >
-                    <RotateCcw className="h-5 w-5" />
-                    <span>Reset</span>
+                    {isLoadingSuggestions ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Getting Tips...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lightbulb className="h-5 w-5" />
+                        <span>Get Tips</span>
+                      </>
+                    )}
                   </button>
-                )}
-              </div>
-            </form>
-          </div>
 
-          {/* Results Section */}
-          {rewriteResult && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="border-b border-gray-200">
-                <nav className="flex space-x-8 px-6">
-                  <button
-                    onClick={() => setActiveTab('rewrite')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'rewrite'
-                        ? 'border-green-500 text-green-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    Rewritten Essay
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('compare')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'compare'
-                        ? 'border-green-500 text-green-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    Side-by-Side Compare
-                  </button>
-                </nav>
-              </div>
+                  {(rewriteResult || suggestions.length > 0) && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="bg-gradient-to-r from-gray-600 to-gray-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-gray-700 hover:to-gray-800 flex items-center justify-center space-x-3 transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
+                    >
+                      <RotateCcw className="h-5 w-5" />
+                      <span>Reset</span>
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
 
-              <div className="p-6">
-                {activeTab === 'rewrite' && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold text-gray-900">Improved Version</h3>
-                      <div className="flex space-x-2">
+            {/* Results Section */}
+            {rewriteResult && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+                <div className="border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+                  <nav className="flex space-x-8 px-8">
+                    <button
+                      onClick={() => setActiveTab('rewrite')}
+                      className={`py-4 px-1 border-b-2 font-semibold text-sm transition-colors ${
+                        activeTab === 'rewrite'
+                          ? 'border-emerald-500 text-emerald-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      Rewritten Essay
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('compare')}
+                      className={`py-4 px-1 border-b-2 font-semibold text-sm transition-colors ${
+                        activeTab === 'compare'
+                          ? 'border-emerald-500 text-emerald-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      Side-by-Side Compare
+                    </button>
+                  </nav>
+                </div>
+
+                <div className="p-8">
+                  {activeTab === 'rewrite' && (
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-2xl font-bold text-gray-900">Improved Version</h3>
+                      </div>
+                      
+                      <div className="flex space-x-3">
                         <button
                           onClick={() => copyToClipboard(rewriteResult.rewrittenEssay)}
-                          className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center space-x-2 transition-colors"
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
                         >
                           <Copy className="h-4 w-4" />
                           <span>{copySuccess ? 'Copied!' : 'Copy'}</span>
                         </button>
                         <button
                           onClick={() => downloadText(rewriteResult.rewrittenEssay, 'rewritten-essay.txt')}
-                          className="bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 flex items-center space-x-2 transition-colors"
+                          className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-gray-700 hover:to-gray-800 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
                         >
                           <Download className="h-4 w-4" />
                           <span>Download</span>
                         </button>
-                        <button
-                          onClick={handleSaveEssay}
-                          disabled={saving || saveSuccess}
-                          className={`flex items-center space-x-2 px-3 py-2 text-sm rounded-lg transition-colors ${saveSuccess ? 'bg-green-100 text-green-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'} ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          {saving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : saveSuccess ? (
-                            <CheckCircle className="h-4 w-4" />
-                          ) : (
-                            <ArrowRight className="h-4 w-4" />
-                          )}
-                          <span>{saveSuccess ? 'Saved!' : 'Save to History'}</span>
-                        </button>
                       </div>
-                    </div>
-                    {saveError && <div className="text-red-500 text-sm mb-2">{saveError}</div>}
-                    <div className="bg-gray-50 rounded-lg p-4 border">
-                      <pre className="whitespace-pre-wrap text-gray-900 font-sans">
-                        {rewriteResult.rewrittenEssay}
-                      </pre>
-                    </div>
-                    {rewriteResult.instructions && (
-                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                        <p className="text-sm text-blue-800">
-                          <strong>Applied instructions:</strong> {rewriteResult.instructions}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'compare' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Original</h3>
-                      <div className="bg-red-50 rounded-lg p-4 border border-red-200 max-h-96 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap text-gray-900 text-sm font-sans">
-                          {rewriteResult.originalEssay}
-                        </pre>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Improved</h3>
-                      <div className="bg-green-50 rounded-lg p-4 border border-green-200 max-h-96 overflow-y-auto">
-                        <pre className="whitespace-pre-wrap text-gray-900 text-sm font-sans">
+                      
+                      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
+                        <pre className="whitespace-pre-wrap text-gray-900 font-sans leading-relaxed">
                           {rewriteResult.rewrittenEssay}
                         </pre>
                       </div>
+                      
+                      {rewriteResult.instructions && (
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+                          <p className="text-sm text-blue-800">
+                            <strong>Applied instructions:</strong> {rewriteResult.instructions}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {activeTab === 'compare' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">Original</h3>
+                        <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-6 border border-red-200 max-h-96 overflow-y-auto">
+                          <pre className="whitespace-pre-wrap text-gray-900 text-sm font-sans leading-relaxed">
+                            {rewriteResult.originalEssay}
+                          </pre>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">Improved</h3>
+                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200 max-h-96 overflow-y-auto">
+                          <pre className="whitespace-pre-wrap text-gray-900 text-sm font-sans leading-relaxed">
+                            {rewriteResult.rewrittenEssay}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Suggestions */}
-          {suggestions.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                <Lightbulb className="h-5 w-5 text-yellow-500" />
-                <span>Improvement Tips</span>
-              </h3>
-              <ul className="space-y-3">
-                {suggestions.map((suggestion, index) => (
-                  <li key={index} className="flex items-start space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">{suggestion}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Features */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-              <Settings className="h-5 w-5 text-gray-500" />
-              <span>Features</span>
-            </h3>
-            <ul className="space-y-3 text-sm text-gray-600">
-              <li className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>Improve sentence structure and flow</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>Enhance vocabulary and word choice</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>Fix grammar and punctuation errors</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>Maintain your original voice and style</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>Side-by-side comparison</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <span>Custom rewriting instructions</span>
-              </li>
-            </ul>
+            )}
           </div>
 
-          {/* Tips */}
-          <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
-            <h3 className="font-semibold text-blue-900 mb-3">Pro Tips</h3>
-            <ul className="text-sm text-blue-800 space-y-2">
-              <li>• Be specific with your instructions for better results</li>
-              <li>• Use "Get Tips" to understand areas for improvement</li>
-              <li>• Compare side-by-side to see the changes</li>
-              <li>• Download or copy the improved version</li>
-            </ul>
+          {/* Sidebar */}
+          <div className="space-y-8">
+            {/* Suggestions */}
+            {suggestions.length > 0 && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">
+                    <Lightbulb className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Improvement Tips</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  {suggestions.map((suggestion, index) => (
+                    <div key={index} className="flex items-start space-x-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
+                      <div className="w-6 h-6 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-white text-xs font-bold">{index + 1}</span>
+                      </div>
+                      <span className="text-gray-700 leading-relaxed">{suggestion}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Features */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                  <Settings className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Features</h3>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">Improve sentence structure and flow</span>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">Enhance vocabulary and word choice</span>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">Fix grammar and punctuation errors</span>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">Maintain your original voice and style</span>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">Side-by-side comparison</span>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700">Custom rewriting instructions</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tips */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+              <h3 className="font-bold text-blue-900 mb-4 text-lg">Pro Tips</h3>
+              <div className="space-y-3 text-blue-800">
+                <div className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Be specific with your instructions for better results</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Use "Get Tips" to understand areas for improvement</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Compare side-by-side to see the changes</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span>Download or copy the improved version</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

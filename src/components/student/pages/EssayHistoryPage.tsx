@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileText, Calendar, Award, TrendingUp, BadgeCheck, Frown, ArrowRightLeft, Search, Sparkles } from "lucide-react";
+import { Loader2, FileText, Calendar, Award, TrendingUp, BadgeCheck, Frown, ArrowRightLeft, Search, Sparkles, ChevronDown, ChevronUp, SortAsc, SortDesc, Trash2, AlertTriangle, History, Target } from "lucide-react";
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -13,9 +13,34 @@ function formatDate(dateString: string) {
 }
 
 function scoreLabel(score: number) {
-  if (score >= 85) return <span className="text-green-600 font-semibold">🟢 Good</span>;
-  if (score >= 70) return <span className="text-yellow-600 font-semibold">🟡 Average</span>;
+  if (score >= 85) return <span className="text-emerald-600 font-semibold">🟢 Good</span>;
+  if (score >= 70) return <span className="text-amber-600 font-semibold">🟡 Average</span>;
   return <span className="text-red-600 font-semibold">🔴 Poor</span>;
+}
+
+// Helper function to determine if an essay should show a score
+function shouldShowScore(essay: any) {
+  // Only show scores for essays that were actually scored (like submitted essays)
+  // Generated, rewritten, and paragraph analysis essays don't have meaningful scores
+  return essay.type === 'Scored' || essay.type === 'Submitted';
+}
+
+// Helper function to get score display
+function getScoreDisplay(essay: any) {
+  if (!shouldShowScore(essay)) {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 border border-gray-300">
+        No Score
+      </span>
+    );
+  }
+  
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-bold text-gray-800">{essay.score}/100</span>
+      {scoreLabel(essay.score)}
+    </div>
+  );
 }
 
 export default function EssayHistoryPage() {
@@ -29,6 +54,9 @@ export default function EssayHistoryPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const take = 10;
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -49,11 +77,39 @@ export default function EssayHistoryPage() {
       .finally(() => setLoading(false));
   }, [session, status, sort, order, page, router]);
 
+  const handleClearHistory = async () => {
+    setClearing(true);
+    try {
+      const response = await fetch('/api/essays', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear history');
+      }
+
+      setEssays([]);
+      setShowClearConfirm(false);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear history');
+    } finally {
+      setClearing(false);
+    }
+  };
+
   if (status === "loading" || loading) {
   return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <Loader2 className="animate-spin w-8 h-8 text-indigo-500" />
-        <span className="ml-3 text-indigo-700 font-medium">Loading essays...</span>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl mb-6">
+            <Loader2 className="h-8 w-8 text-white animate-spin" />
+          </div>
+          <p className="text-lg font-semibold text-gray-700">Loading essays...</p>
+        </div>
       </div>
     );
   }
@@ -61,84 +117,255 @@ export default function EssayHistoryPage() {
   if (!session) return null;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold text-gradient bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2 animate-fade-in-up">Essay History</h1>
-          <p className="text-gray-500 text-lg">All your generated, scored, and rewritten essays in one place.</p>
-                </div>
-        <div className="flex gap-2 items-center">
-          <label className="text-sm font-medium mr-1">Sort by:</label>
-          <select value={sort} onChange={e => { setSort(e.target.value as any); setPage(1); }} className="border rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500">
-            <option value="date">Date</option>
-            <option value="score">Score</option>
-          </select>
-          <button onClick={() => { setOrder(o => o === 'asc' ? 'desc' : 'asc'); setPage(1); }} className="ml-2 text-indigo-600 underline text-sm">
-            {order === 'desc' ? '↓ Newest/Highest' : '↑ Oldest/Lowest'}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl mb-6">
+            <History className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">
+            Essay History
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            All your generated, scored, and rewritten essays in one place
+          </p>
+        </div>
+
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          {/* Action Buttons */}
+          <div className="flex gap-4 items-center">
+            {/* Clear History Button */}
+            {essays.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setShowClearConfirm(true)}
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 px-6 py-3 rounded-xl font-semibold transition-all duration-200"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear History
+              </Button>
+            )}
+          </div>
+          
+          {/* Sort Controls */}
+          <div className="flex gap-3 items-center">
+          <div className="relative">
+            <button
+                className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm shadow-lg hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all duration-200"
+              id="sort-menu"
+              aria-haspopup="listbox"
+              aria-expanded={sortMenuOpen}
+              type="button"
+              onClick={() => setSortMenuOpen((open) => !open)}
+              onBlur={() => setTimeout(() => setSortMenuOpen(false), 100)}
+            >
+                <span className="font-semibold text-gray-700">Sort by:</span>
+                <span className="ml-1 text-indigo-700 font-bold capitalize">{sort === 'date' ? 'Date' : 'Score'}</span>
+              {sortMenuOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            </button>
+            {sortMenuOpen && (
+                <div className="absolute right-0 mt-2 w-36 rounded-xl shadow-2xl bg-white/90 backdrop-blur-sm ring-1 ring-black ring-opacity-5 z-10 animate-fade-in-up" role="listbox" aria-labelledby="sort-menu">
+                <button
+                    className={`w-full text-left px-4 py-3 text-sm rounded-lg hover:bg-indigo-50 transition-colors ${sort === 'date' ? 'bg-indigo-100 font-bold' : ''}`}
+                  onClick={() => { setSort('date'); setPage(1); setSortMenuOpen(false); }}
+                  role="option"
+                  aria-selected={sort === 'date'}
+                >
+                  Date
+                </button>
+                <button
+                    className={`w-full text-left px-4 py-3 text-sm rounded-lg hover:bg-indigo-50 transition-colors ${sort === 'score' ? 'bg-indigo-100 font-bold' : ''}`}
+                  onClick={() => { setSort('score'); setPage(1); setSortMenuOpen(false); }}
+                  role="option"
+                  aria-selected={sort === 'score'}
+                >
+                  Score
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => { setOrder(o => o === 'asc' ? 'desc' : 'asc'); setPage(1); }}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm shadow-lg hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all duration-200"
+            aria-label={order === 'desc' ? 'Sort Descending' : 'Sort Ascending'}
+            type="button"
+          >
+            {order === 'desc' ? <SortDesc className="w-4 h-4 text-indigo-600" /> : <SortAsc className="w-4 h-4 text-indigo-600" />}
+              <span className="text-sm font-semibold text-gray-600">{order === 'desc' ? 'Newest/Highest' : 'Oldest/Lowest'}</span>
           </button>
+        </div>
+      </div>
+
+        {/* Clear History Confirmation Modal */}
+        {showClearConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="p-3 bg-red-100 rounded-full">
+                  <AlertTriangle className="h-8 w-8 text-red-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Clear Essay History</h3>
+              </div>
+              
+              <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+                Are you sure you want to delete all your essay history? This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowClearConfirm(false)}
+                  className="flex-1 py-3 rounded-xl font-semibold"
+                  disabled={clearing}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleClearHistory}
+                  disabled={clearing}
+                  className="flex-1 py-3 rounded-xl font-semibold"
+                >
+                  {clearing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Clearing...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clear All
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
-      {error && <div className="text-red-500 text-center mb-4">{error}</div>}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl text-center">
+            <span className="text-red-700 font-semibold">{error}</span>
+          </div>
+        )}
+        
       {essays.length === 0 ? (
-        <div className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl shadow-lg border border-gray-100 p-12 text-center animate-fade-in-up">
-          <Frown className="mx-auto text-indigo-300 w-16 h-16 mb-4" />
-          <h2 className="text-2xl font-bold mb-2 text-gray-800">No Essays Yet</h2>
-          <p className="text-gray-500 mb-4">📝 You haven’t submitted any essays yet. Start by using the Essay Generator or Essay Scoring tool.</p>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-16 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-indigo-300 to-purple-300 rounded-full mb-6">
+              <Frown className="h-10 w-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4 text-gray-800">No Essays Yet</h2>
+            <p className="text-gray-600 text-lg mb-6">📝 You haven't submitted any essays yet. Start by using the Essay Generator or Essay Scoring tool.</p>
+            <div className="flex justify-center space-x-4">
+              <Button 
+                onClick={() => router.push('/dashboard/essay-generator')}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-6 py-3 rounded-xl font-semibold"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Essay
+              </Button>
+              <Button 
+                onClick={() => router.push('/dashboard/score-essay')}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3 rounded-xl font-semibold"
+              >
+                Score New Essay
+              </Button>
+            </div>
               </div>
       ) : (
-        <div className="overflow-x-auto animate-fade-in-up">
-          <table className="min-w-full bg-white rounded-xl shadow border border-gray-100">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
             <thead className="bg-gradient-to-r from-indigo-50 to-purple-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Topic</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Score</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Feedback</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Topic</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Score</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Feedback</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
+                <tbody className="divide-y divide-gray-100">
               {essays.map((essay, idx) => (
-                <tr key={essay.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-indigo-50/30'}>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                    <tr key={essay.id} className={idx % 2 === 0 ? 'bg-white/50' : 'bg-indigo-50/30 hover:bg-indigo-50/50 transition-colors'}>
+                      <td className="px-6 py-4 whitespace-nowrap">
                     {essay.type === 'Rewritten' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-700"><ArrowRightLeft className="w-4 h-4" /> Rewritten</span>
+                          <span className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-pink-100 to-rose-100 text-pink-700 border border-pink-200">
+                            <ArrowRightLeft className="w-4 h-4" /> Rewritten
+                          </span>
                     ) : essay.type === 'Scored' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700"><BadgeCheck className="w-4 h-4" /> Scored</span>
+                          <span className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700 border border-emerald-200">
+                            <BadgeCheck className="w-4 h-4" /> Scored
+                          </span>
                     ) : essay.type === 'Paragraph Analysis' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700"><Search className="w-4 h-4" /> Analyzed</span>
+                          <span className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-700 border border-cyan-200">
+                            <Search className="w-4 h-4" /> Analyzed
+                          </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700"><Sparkles className="w-4 h-4" /> Generated</span>
+                          <span className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 border border-purple-200">
+                            <Sparkles className="w-4 h-4" /> Generated
+                          </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 max-w-xs truncate font-medium text-gray-900">{essay.topic}</td>
-                  <td className="px-4 py-3 text-gray-600">{formatDate(essay.submittedAt)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">{essay.score}/100</span>
-                      {scoreLabel(essay.score)}
-            </div>
+                      <td className="px-6 py-4 max-w-xs truncate font-semibold text-gray-900">{essay.topic}</td>
+                      <td className="px-6 py-4 text-gray-600 font-medium">{formatDate(essay.submittedAt)}</td>
+                      <td className="px-6 py-4">
+                        {getScoreDisplay(essay)}
                   </td>
-                  <td className="px-4 py-3 text-gray-700 max-w-xs truncate">
+                      <td className="px-6 py-4 text-gray-700 max-w-xs truncate">
                     {essay.feedback.length > 80 ? essay.feedback.slice(0, 80) + '…' : essay.feedback}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard/student/essay-history/feedback/${essay.id}`)} className="hover:bg-indigo-100 mr-2">Feedback</Button>
-                    <Button variant="secondary" size="sm" onClick={() => router.push(`/dashboard/student/essay-history/rewrite?id=${essay.id}`)} className="hover:bg-pink-100">Rewrite</Button>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => router.push(`/dashboard/student/essay-history/feedback/${essay.id}`)} 
+                            className="hover:bg-indigo-100 border-indigo-200 text-indigo-700 rounded-lg px-3 py-2 text-sm font-semibold"
+                          >
+                            Feedback
+                          </Button>
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => router.push(`/dashboard/student/essay-history/rewrite?id=${essay.id}`)} 
+                            className="hover:bg-pink-100 bg-pink-50 text-pink-700 rounded-lg px-3 py-2 text-sm font-semibold"
+                          >
+                            Rewrite
+                          </Button>
+                        </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+            </div>
                   </div>
       )}
+        
       {essays.length > 0 && (
-        <div className="flex justify-center mt-8 gap-4 animate-fade-in-up">
-          <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</Button>
-          <Button variant="outline" disabled={!hasMore && essays.length < take} onClick={() => setPage(p => p + 1)}>Next</Button>
+          <div className="flex justify-center mt-8 gap-4">
+            <Button 
+              variant="outline" 
+              disabled={page === 1} 
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="px-6 py-3 rounded-xl font-semibold"
+            >
+              Previous
+            </Button>
+            <Button 
+              variant="outline" 
+              disabled={!hasMore && essays.length < take} 
+              onClick={() => setPage(p => p + 1)}
+              className="px-6 py-3 rounded-xl font-semibold"
+            >
+              Next
+            </Button>
         </div>
       )}
+      </div>
     </div>
   );
 } 

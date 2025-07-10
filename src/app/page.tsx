@@ -20,8 +20,8 @@ export default function Home() {
               <span className="text-gray-900">with AI-Powered Feedback</span>
             </h1>
             <p className="mt-8 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed animate-fade-in-delay">
-              Essai helps students write better essays, enables teachers to grade faster,
-              and provides schools with powerful analytics to improve writing outcomes.
+              Essai helps writers improve their essays with AI-powered feedback, scoring, and analysis.
+              Perfect for students, professionals, and anyone looking to enhance their writing skills.
             </p>
             <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-delay-2">
               <Link

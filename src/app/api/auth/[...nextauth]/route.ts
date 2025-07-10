@@ -1,7 +1,7 @@
-import { GET, POST } from "@/app/auth";
+// import { GET, POST } from "@/app/auth";
 
 import NextAuth from "next-auth";
-import { authOptions } from "@/app/auth";
+import { authOptions } from '@/app/auth';
 
 const handler = NextAuth(authOptions);
 

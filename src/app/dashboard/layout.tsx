@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import StudentSidebar from '@/components/student/StudentSidebar';
-import StudentTopNav from '@/components/student/StudentTopNav';
+import Sidebar from '@/components/student/Sidebar';
 
 export default function DashboardLayout({
   children,
@@ -18,7 +17,7 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen">
         {/* Sidebar */}
-        <StudentSidebar
+        <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           activePage={activePage}
@@ -27,13 +26,6 @@ export default function DashboardLayout({
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
-          {/* Top navigation */}
-          <StudentTopNav
-            onMenuClick={() => setSidebarOpen(true)}
-            user={session?.user}
-            onSignOut={() => signOut({ callbackUrl: '/' })}
-          />
-
           {/* Page content */}
           <main className="flex-1 overflow-y-auto">
             {children}

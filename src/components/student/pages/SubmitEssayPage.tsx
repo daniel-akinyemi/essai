@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Upload, Send, CheckCircle, AlertCircle, Loader2, Star, TrendingUp } from "lucide-react";
+import { FileText, Upload, Send, CheckCircle, AlertCircle, Loader2, Star, TrendingUp, Target, Award, Zap } from "lucide-react";
 import { useSession } from 'next-auth/react';
 
 interface CleanEssayScore {
@@ -26,9 +26,7 @@ export default function SubmitEssayPage() {
   const [score, setScore] = useState<CleanEssayScore | null>(null);
   const [error, setError] = useState('');
   const { data: session } = useSession();
-  const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState('');
+  const [autoSaveMessage, setAutoSaveMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +44,7 @@ export default function SubmitEssayPage() {
     setIsLoading(true);
     setError('');
     setScore(null);
+    setAutoSaveMessage('');
 
     try {
       const response = await fetch('/api/scoreEssay', {
@@ -63,6 +62,27 @@ export default function SubmitEssayPage() {
 
       const result = await response.json();
       setScore(result);
+      
+      // Automatically save to history
+      try {
+        const feedback = result.improvementSuggestions.join(' ');
+        const res = await fetch('/api/essays', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: result.essayTitle,
+            content,
+            type: 'Scored',
+            score: result.overallScore,
+            feedback,
+          })
+        });
+        if (res.ok) {
+          setAutoSaveMessage('Essay automatically saved to your history.');
+        }
+      } catch (saveError) {
+        console.error('Failed to auto-save essay:', saveError);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while scoring your essay');
     } finally {
@@ -70,46 +90,25 @@ export default function SubmitEssayPage() {
     }
   };
 
-  const handleSaveEssay = async () => {
-    if (!score) return;
-    setSaving(true);
-    setSaveSuccess(false);
-    setSaveError('');
-    try {
-      const feedback = score.improvementSuggestions.join(' ');
-      const res = await fetch('/api/essays', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: score.essayTitle,
-          content,
-          type: 'Scored',
-          score: score.overallScore,
-          feedback,
-        })
-      });
-      if (!res.ok) throw new Error('Failed to save essay.');
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
-    } catch (err: any) {
-      setSaveError(err.message || 'Failed to save essay.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
+    if (score >= 90) return 'text-emerald-600';
     if (score >= 80) return 'text-blue-600';
-    if (score >= 70) return 'text-yellow-600';
+    if (score >= 70) return 'text-amber-600';
     return 'text-red-600';
   };
 
   const getScoreBgColor = (score: number) => {
-    if (score >= 90) return 'bg-green-100';
-    if (score >= 80) return 'bg-blue-100';
-    if (score >= 70) return 'bg-yellow-100';
-    return 'bg-red-100';
+    if (score >= 90) return 'bg-emerald-50 border-emerald-200';
+    if (score >= 80) return 'bg-blue-50 border-blue-200';
+    if (score >= 70) return 'bg-amber-50 border-amber-200';
+    return 'bg-red-50 border-red-200';
+  };
+
+  const getScoreGradient = (score: number) => {
+    if (score >= 90) return 'from-emerald-500 to-emerald-600';
+    if (score >= 80) return 'from-blue-500 to-blue-600';
+    if (score >= 70) return 'from-amber-500 to-amber-600';
+    return 'from-red-500 to-red-600';
   };
 
   const parseScore = (scoreString: string) => {
@@ -118,23 +117,37 @@ export default function SubmitEssayPage() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Submit Essay</h1>
-        <p className="text-gray-600">Submit your essay for AI-powered scoring and detailed feedback.</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl mb-6">
+            <Target className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">
+            Score Essay
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Get instant AI-powered scoring and detailed feedback to improve your writing skills
+          </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Essay Submission Form */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
-            <FileText className="h-5 w-5 text-blue-600" />
-            <span>Essay Submission</span>
-          </h2>
+          {/* Essay Scoring Form */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+            <div className="flex items-center space-x-3 mb-8">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Essay Scoring</h2>
+                <p className="text-gray-600">Submit your essay for comprehensive analysis</p>
+              </div>
+            </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="topic" className="block text-sm font-semibold text-gray-700">
                 Essay Topic *
               </label>
               <input
@@ -143,13 +156,13 @@ export default function SubmitEssayPage() {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Enter your essay topic..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/50 backdrop-blur-sm"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="content" className="block text-sm font-semibold text-gray-700">
                 Essay Content *
               </label>
               <textarea
@@ -158,17 +171,20 @@ export default function SubmitEssayPage() {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Write your essay here... (minimum 100 characters)"
                 rows={12}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none bg-white/50 backdrop-blur-sm"
                 required
               />
-              <p className="text-sm text-gray-500 mt-1">
-                {content.length} characters (minimum 100 required)
-              </p>
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span>{content.length} characters</span>
+                  <span className={content.length < 100 ? 'text-red-500' : 'text-green-600'}>
+                    {content.length < 100 ? `${100 - content.length} more needed` : '✓ Minimum met'}
+                  </span>
+                </div>
             </div>
 
             {error && (
-              <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-red-600" />
+                <div className="flex items-center space-x-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
                 <span className="text-red-700 text-sm">{error}</span>
               </div>
             )}
@@ -176,17 +192,17 @@ export default function SubmitEssayPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-colors"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Scoring Essay...</span>
+                    <span>Analyzing Essay...</span>
                 </>
               ) : (
                 <>
-                  <Send className="h-5 w-5" />
-                  <span>Submit Essay</span>
+                    <Zap className="h-5 w-5" />
+                    <span>Score Essay</span>
                 </>
               )}
             </button>
@@ -196,76 +212,75 @@ export default function SubmitEssayPage() {
         {/* Results Section */}
         <div className="space-y-6">
           {isLoading && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12">
               <div className="text-center">
-                <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Analyzing Your Essay</h3>
-                <p className="text-gray-600">Our AI is carefully reviewing your essay and generating detailed feedback...</p>
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mb-6">
+                    <Loader2 className="h-10 w-10 text-white animate-spin" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Analyzing Your Essay</h3>
+                  <p className="text-gray-600 text-lg">Our AI is carefully reviewing your essay and generating detailed feedback...</p>
               </div>
             </div>
           )}
 
           {score && (
             <>
-              {/* Essay Title and Overall Score */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{score.essayTitle}</h3>
-                  <button
-                    onClick={handleSaveEssay}
-                    disabled={saving || saveSuccess}
-                    className={`flex items-center space-x-2 px-3 py-1 text-sm rounded-lg transition-colors ${saveSuccess ? 'bg-green-100 text-green-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'} ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {saving ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : saveSuccess ? (
-                      <CheckCircle className="h-4 w-4" />
-                    ) : (
-                      <Star className="h-4 w-4" />
-                    )}
-                    <span>{saveSuccess ? 'Saved!' : 'Save to History'}</span>
-                  </button>
-                </div>
-                {saveError && <div className="text-red-500 text-sm mb-2">{saveError}</div>}
-                <p className="text-sm text-gray-500 mb-4">Scored on {score.timestamp}</p>
-                <div className="text-center">
-                  <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full ${getScoreBgColor(score.overallScore)} mb-4`}>
-                    <span className={`text-3xl font-bold ${getScoreColor(score.overallScore)}`}>{score.overallScore}</span>
+                {/* Overall Score Card */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                  <div className="text-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{score.essayTitle}</h3>
+                    <p className="text-gray-500">Scored on {score.timestamp}</p>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900 mb-2">/ 100</p>
-                  <p className="text-gray-600">
-                    {score.overallScore >= 90 ? 'Excellent work!' :
-                     score.overallScore >= 80 ? 'Great job!' :
-                     score.overallScore >= 70 ? 'Good effort!' :
-                     score.overallScore >= 60 ? 'Keep practicing!' : 'Needs improvement'}
+                  
+                  <div className="flex justify-center mb-8">
+                    <div className="relative">
+                      <div className={`w-32 h-32 rounded-full bg-gradient-to-r ${getScoreGradient(score.overallScore)} flex items-center justify-center shadow-2xl`}>
+                        <span className="text-4xl font-bold text-white">{score.overallScore}</span>
+                      </div>
+                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
+                        <Award className="h-5 w-5 text-amber-500" />
+                      </div>
+                </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-gray-900 mb-2">/ 100</p>
+                    <p className={`text-lg font-semibold ${getScoreColor(score.overallScore)}`}>
+                      {score.overallScore >= 90 ? '🏆 Excellent work!' :
+                       score.overallScore >= 80 ? '🌟 Great job!' :
+                       score.overallScore >= 70 ? '👍 Good effort!' :
+                       score.overallScore >= 60 ? '💪 Keep practicing!' : '📚 Needs improvement'}
                   </p>
                 </div>
               </div>
 
-              {/* Weighted Score Breakdown */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                  <span>Score Breakdown</span>
-                </h3>
-                <div className="space-y-4">
+                {/* Score Breakdown */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">Score Breakdown</h3>
+                  </div>
+                  
+                  <div className="space-y-6">
                   {Object.entries(score.scoreBreakdown).map(([category, scoreString]) => {
                     const { score: scoreValue, max, percentage } = parseScore(scoreString);
                     return (
-                      <div key={category} className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-700 capitalize">
+                        <div key={category} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-gray-700 capitalize">
                           {category.replace(/([A-Z])/g, ' $1').trim()}
                         </span>
-                        <div className="flex items-center space-x-3">
-                          <div className="w-32 bg-gray-200 rounded-full h-2">
+                            <span className={`text-sm font-bold ${getScoreColor(percentage)}`}>
+                              {scoreString}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                             <div
-                              className={`h-2 rounded-full ${getScoreBgColor(percentage)}`}
+                              className={`h-3 rounded-full bg-gradient-to-r ${getScoreGradient(percentage)} transition-all duration-1000 ease-out`}
                               style={{ width: `${percentage}%` }}
                             />
-                          </div>
-                          <span className={`text-sm font-semibold ${getScoreColor(percentage)}`}>
-                            {scoreString}
-                          </span>
                         </div>
                       </div>
                     );
@@ -275,31 +290,39 @@ export default function SubmitEssayPage() {
 
               {/* Improvement Suggestions */}
               {score.improvementSuggestions.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <span>Improvement Suggestions</span>
-                  </h3>
-                  <ul className="space-y-2">
+                  <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                    <div className="flex items-center space-x-3 mb-6">
+                      <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
+                        <CheckCircle className="h-6 w-6 text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900">Improvement Suggestions</h3>
+                    </div>
+                    
+                    <div className="space-y-4">
                     {score.improvementSuggestions.map((suggestion, index) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-700">{suggestion}</span>
-                      </li>
-                    ))}
-                  </ul>
+                        <div key={index} className="flex items-start space-x-3 p-4 bg-green-50 rounded-xl border border-green-200">
+                          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-white text-xs font-bold">{index + 1}</span>
+                          </div>
+                          <span className="text-gray-700 leading-relaxed">{suggestion}</span>
+                        </div>
+                      ))}
+                    </div>
                 </div>
               )}
             </>
           )}
 
           {!isLoading && !score && (
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready to Submit</h3>
-              <p className="text-gray-600">Fill out the form and submit your essay to receive AI-powered scoring and feedback.</p>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full mb-6">
+                  <Upload className="h-10 w-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">Ready to Score</h3>
+                <p className="text-gray-600 text-lg">Fill out the form and submit your essay to receive AI-powered scoring and feedback.</p>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

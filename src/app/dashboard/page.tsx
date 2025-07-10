@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation";
+import dynamic from 'next/dynamic';
+
+// Dynamically import the new Dashboard (App) component for SSR compatibility
+const Dashboard = dynamic(() => import('@/components/Dashboard'), { ssr: false });
 
 export default function DashboardPage() {
-  // For now, redirect to student dashboard
-  // Later this can be updated to show role-based routing
-  redirect('/dashboard/student');
+  return <Dashboard />;
 } 

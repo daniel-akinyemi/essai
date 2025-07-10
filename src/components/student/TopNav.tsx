@@ -1,18 +1,18 @@
 'use client';
 
-import { Menu, Bell, User, LogOut, ChevronDown, CheckCircle, FileText, BookOpen, Settings } from "lucide-react";
+import { Menu, Bell, User, LogOut, ChevronDown, CheckCircle, FileText, BookOpen, Settings, Shield, Save, Clock, Palette } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { useTheme } from "@/components/Providers";
 
-interface StudentTopNavProps {
+interface TopNavProps {
   onMenuClick: () => void;
   user?: any;
   onSignOut?: () => void;
 }
 
-export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentTopNavProps) {
+export default function TopNav({ onMenuClick, user, onSignOut }: TopNavProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -28,6 +28,16 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
   const [language, setLanguage] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  
+  // New settings states
+  const [writingStyle, setWritingStyle] = useState('academic');
+  const [essayLength, setEssayLength] = useState('medium');
+  const [autoSaveFrequency, setAutoSaveFrequency] = useState('30');
+  const [dataSharing, setDataSharing] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
+  const [showWritingTips, setShowWritingTips] = useState(true);
+  const [defaultEssayType, setDefaultEssayType] = useState('argumentative');
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -92,7 +102,7 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
     const supabase = createClientComponentClient();
     supabase
       .from('user_settings')
-      .select('email_notifications, push_notifications, theme, language, profile_picture_url')
+      .select('email_notifications, push_notifications, theme, language, profile_picture_url, writing_style, essay_length, auto_save_frequency, data_sharing, analytics_enabled, show_writing_tips, default_essay_type')
       .eq('user_id', user.id)
       .single()
       .then(({ data, error }) => {
@@ -101,6 +111,13 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
           setPushNotif(data.push_notifications);
           setLanguage(data.language || "");
           setProfilePicUrl(data.profile_picture_url || "");
+          setWritingStyle(data.writing_style || 'academic');
+          setEssayLength(data.essay_length || 'medium');
+          setAutoSaveFrequency(data.auto_save_frequency || '30');
+          setDataSharing(data.data_sharing || false);
+          setAnalyticsEnabled(data.analytics_enabled !== false);
+          setShowWritingTips(data.show_writing_tips !== false);
+          setDefaultEssayType(data.default_essay_type || 'argumentative');
         }
         setSettingsLoading(false);
       });
@@ -123,6 +140,13 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
       theme,
       language,
       profile_picture_url: profilePicUrl,
+      writing_style: writingStyle,
+      essay_length: essayLength,
+      auto_save_frequency: autoSaveFrequency,
+      data_sharing: dataSharing,
+      analytics_enabled: analyticsEnabled,
+      show_writing_tips: showWritingTips,
+      default_essay_type: defaultEssayType,
     }, { onConflict: 'user_id' });
     setSettingsSaving(false);
     setShowSettings(false);
@@ -139,7 +163,7 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
           <Menu className="h-5 w-5" />
         </button>
         <div className="hidden lg:block">
-          <h1 className="text-xl font-semibold text-gray-900">Student Dashboard</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
         </div>
       </div>
 
@@ -152,9 +176,9 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
             onClick={() => setShowNotif((v) => !v)}
             aria-label="Notifications"
           >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          <Bell className="h-5 w-5" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
           {showNotif && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg z-50 border border-gray-200 animate-fadeIn">
               <div className="p-4 border-b border-gray-100 font-semibold text-gray-900 flex items-center gap-2">
@@ -212,19 +236,26 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
               <Settings className="h-5 w-5" />
             </button>
           </SheetTrigger>
-          <SheetContent side="right" className="max-w-md w-full">
+          <SheetContent side="right" className="max-w-md w-full overflow-y-auto">
             <SheetHeader>
-              <SheetTitle>Settings</SheetTitle>
+              <SheetTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Settings
+              </SheetTitle>
             </SheetHeader>
             <div className="p-4 space-y-6">
               {settingsLoading ? (
                 <div className="text-center text-gray-500 py-8">Loading settings...</div>
               ) : (
                 <>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Picture</h3>
+                  {/* Profile Picture Section */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Profile Picture
+                    </h3>
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-3xl overflow-hidden">
+                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-3xl overflow-hidden border-2 border-white shadow-md">
                         {profilePicUrl ? (
                           <img src={profilePicUrl} alt="Profile" className="w-16 h-16 object-cover rounded-full" />
                         ) : (
@@ -239,7 +270,7 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
                         onChange={handleProfilePicUpload}
                       />
                       <button
-                        className="px-3 py-2 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                        className="px-3 py-2 rounded bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition shadow-md"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
                       >
@@ -248,9 +279,87 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
                     </div>
                     {uploadError && <div className="text-red-600 text-xs mt-1">{uploadError}</div>}
                   </div>
+
+                  {/* Writing Preferences Section */}
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Writing Preferences
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">Writing Style</label>
+                        <select
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
+                          value={writingStyle}
+                          onChange={e => setWritingStyle(e.target.value)}
+                        >
+                          <option value="academic">Academic</option>
+                          <option value="creative">Creative</option>
+                          <option value="professional">Professional</option>
+                          <option value="casual">Casual</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">Default Essay Type</label>
+                        <select
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
+                          value={defaultEssayType}
+                          onChange={e => setDefaultEssayType(e.target.value)}
+                        >
+                          <option value="argumentative">Argumentative</option>
+                          <option value="expository">Expository</option>
+                          <option value="narrative">Narrative</option>
+                          <option value="descriptive">Descriptive</option>
+                          <option value="persuasive">Persuasive</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">Preferred Essay Length</label>
+                        <select
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
+                          value={essayLength}
+                          onChange={e => setEssayLength(e.target.value)}
+                        >
+                          <option value="short">Short (300-500 words)</option>
+                          <option value="medium">Medium (500-800 words)</option>
+                          <option value="long">Long (800-1200 words)</option>
+                          <option value="extended">Extended (1200+ words)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Auto-save Settings */}
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <Save className="h-4 w-4" />
+                      Auto-save Settings
+                    </h3>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Notifications</h3>
-                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">Auto-save Frequency (seconds)</label>
+                      <select
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
+                        value={autoSaveFrequency}
+                        onChange={e => setAutoSaveFrequency(e.target.value)}
+                      >
+                        <option value="15">15 seconds</option>
+                        <option value="30">30 seconds</option>
+                        <option value="60">1 minute</option>
+                        <option value="120">2 minutes</option>
+                        <option value="300">5 minutes</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Notifications Section */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <Bell className="h-4 w-4" />
+                      Notifications
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
                       <span className="text-gray-700">Email notifications</span>
                       <label className="inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" checked={emailNotif} onChange={e => setEmailNotif(e.target.checked)} />
@@ -263,12 +372,52 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
                         <input type="checkbox" className="sr-only peer" checked={pushNotif} onChange={e => setPushNotif(e.target.checked)} />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:bg-purple-600 transition"></div>
                       </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700">Show writing tips</span>
+                        <label className="inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" checked={showWritingTips} onChange={e => setShowWritingTips(e.target.checked)} />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer peer-checked:bg-green-600 transition"></div>
+                        </label>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Privacy & Analytics Section */}
+                  <div className="bg-gradient-to-r from-red-50 to-pink-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Privacy & Analytics
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700">Enable analytics</span>
+                        <label className="inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" checked={analyticsEnabled} onChange={e => setAnalyticsEnabled(e.target.checked)} />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer peer-checked:bg-green-600 transition"></div>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700">Data sharing for improvement</span>
+                        <label className="inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" checked={dataSharing} onChange={e => setDataSharing(e.target.checked)} />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-500 rounded-full peer peer-checked:bg-orange-600 transition"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Appearance Section */}
+                  <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      Appearance
+                    </h3>
+                    <div className="space-y-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Theme</h3>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">Theme</label>
                     <select
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
                       value={theme}
                       onChange={e => setTheme(e.target.value)}
                     >
@@ -278,9 +427,9 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
                     </select>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Language</h3>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">Language</label>
                     <select
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white"
                       value={language || ''}
                       onChange={e => setLanguage(e.target.value)}
                     >
@@ -292,9 +441,12 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
                       <option value="zh">Chinese</option>
                     </select>
                   </div>
+                    </div>
+                  </div>
+
                   <SheetFooter>
                     <button
-                      className="mt-4 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition shadow disabled:opacity-60"
+                      className="mt-4 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition shadow-lg disabled:opacity-60"
                       onClick={handleSaveSettings}
                       disabled={settingsSaving}
                     >
@@ -317,7 +469,7 @@ export default function StudentTopNav({ onMenuClick, user, onSignOut }: StudentT
               {profilePicUrl ? (
                 <img src={profilePicUrl} alt="Profile" className="w-8 h-8 object-cover rounded-full" />
               ) : (
-                <User className="h-4 w-4 text-white" />
+              <User className="h-4 w-4 text-white" />
               )}
             </div>
             <div className="hidden md:block text-left">

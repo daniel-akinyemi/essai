@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Loader2, AlertCircle, CheckCircle, XCircle, AlertTriangle, Target, Zap, TrendingUp, FileText } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { FileText, Search, AlertCircle, Loader2, TrendingUp, Target, CheckCircle, Search as SearchIcon } from 'lucide-react';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { AutoSaveStatus } from '@/components/ui/auto-save-status';
 
 interface ParagraphAnalysis {
   paragraph: number;
@@ -23,6 +26,74 @@ export default function ParagraphAnalyzerPage() {
   const [autoFix, setAutoFix] = useState(false);
   const [fixedEssay, setFixedEssay] = useState<string>('');
   const [autoSaveMessage, setAutoSaveMessage] = useState('');
+
+  const { data: session } = useSession();
+
+  // User settings state
+  const [userSettings, setUserSettings] = useState({
+    autoSaveFrequency: '30'
+  });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // Load user settings on component mount
+  useEffect(() => {
+    if (session?.user) {
+      loadUserSettings();
+    }
+  }, [session?.user]);
+
+  const loadUserSettings = async () => {
+    try {
+      const response = await fetch('/api/user-settings', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserSettings({
+          autoSaveFrequency: data.autoSaveFrequency || '30'
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user settings:', error);
+    } finally {
+      setSettingsLoaded(true);
+    }
+  };
+
+  // Auto-save functionality
+  const autoSaveHandler = async (content: string) => {
+    if (!content.trim() || !session?.user) return;
+    
+    try {
+      const response = await fetch('/api/autoSave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          topic: topic || 'Paragraph analysis draft',
+          type: 'Draft'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Auto-save failed');
+      }
+    } catch (error) {
+      console.error('Auto-save error:', error);
+      throw error;
+    }
+  };
+
+  const { isSaving, saveStatus, saveNow } = useAutoSave({
+    content: essay,
+    autoSaveFrequency: userSettings.autoSaveFrequency, // Use user's preferred frequency
+    onSave: autoSaveHandler,
+    enabled: !!session?.user && essay.length > 50
+  });
 
   const handleParagraphAnalysis = async () => {
     if (!topic.trim() || !essay.trim()) {
@@ -90,9 +161,9 @@ export default function ParagraphAnalyzerPage() {
       case '✅ On-topic':
         return <CheckCircle className="h-5 w-5 text-emerald-600" />;
       case '🟡 Needs Improvement':
-        return <AlertTriangle className="h-5 w-5 text-amber-600" />;
+        return <AlertCircle className="h-5 w-5 text-amber-600" />;
       case '❌ Off-topic':
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <AlertCircle className="h-5 w-5 text-red-600" />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-600" />;
     }
@@ -161,6 +232,22 @@ export default function ParagraphAnalyzerPage() {
                   placeholder="Paste your essay content here for paragraph analysis..."
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200 min-h-[200px] resize-none bg-white/50 backdrop-blur-sm"
                 />
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span>{essay.length} characters</span>
+                  <div className="flex items-center space-x-4">
+                    {/* Auto-save Status */}
+                    {session?.user && essay.length > 50 && (
+                      <AutoSaveStatus 
+                        status={saveStatus} 
+                        frequency={userSettings.autoSaveFrequency}
+                        className="text-sm"
+                      />
+                    )}
+                    <span className={essay.length < 100 ? 'text-amber-500' : 'text-green-600'}>
+                      {essay.length < 100 ? 'Add more content for better analysis' : '✓ Ready for analysis'}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">

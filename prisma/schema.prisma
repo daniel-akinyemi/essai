@@ -86,9 +86,7 @@ model Essay {
 model UserSettings {
   id                    String   @id @default(cuid())
   userId                String   @unique
-  profilePictureUrl     String?
   emailNotifications    Boolean  @default(true)
-  pushNotifications     Boolean  @default(false)
   showWritingTips       Boolean  @default(true)
   theme                 String   @default("system")
   language              String   @default("en")

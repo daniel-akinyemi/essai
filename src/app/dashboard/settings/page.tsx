@@ -34,18 +34,28 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Settings state
-  const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [emailNotifications, setEmailNotifications] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
   const [showWritingTips, setShowWritingTips] = useState(true);
   const [theme, setTheme] = useState('system');
   const [language, setLanguage] = useState('en');
   const [autoSaveFrequency, setAutoSaveFrequency] = useState('30');
   const [writingStyle, setWritingStyle] = useState('academic');
-  const [defaultEssayType, setDefaultEssayType] = useState('argumentative');
   const [preferredEssayLength, setPreferredEssayLength] = useState('medium');
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [dataSharing, setDataSharing] = useState(false);
+
+  // Separate state for manual save sections
+  const [writingPreferencesSaving, setWritingPreferencesSaving] = useState(false);
+  const [autoSaveSaving, setAutoSaveSaving] = useState(false);
+  const [writingPreferencesMessage, setWritingPreferencesMessage] = useState('');
+  const [autoSaveMessage, setAutoSaveMessage] = useState('');
+
+  // Local state for writing preferences (not auto-saved)
+  const [localWritingStyle, setLocalWritingStyle] = useState('academic');
+  const [localPreferredEssayLength, setLocalPreferredEssayLength] = useState('medium');
+
+  // Local state for auto-save settings (not auto-saved)
+  const [localAutoSaveFrequency, setLocalAutoSaveFrequency] = useState('30');
 
   useEffect(() => {
     if (session?.user) {
@@ -65,18 +75,20 @@ export default function SettingsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setProfilePictureUrl(data.profilePictureUrl || '');
         setEmailNotifications(data.emailNotifications ?? true);
-        setPushNotifications(data.pushNotifications ?? false);
         setShowWritingTips(data.showWritingTips ?? true);
         setTheme(data.theme ?? 'system');
         setLanguage(data.language ?? 'en');
         setAutoSaveFrequency(data.autoSaveFrequency ?? '30');
         setWritingStyle(data.writingStyle ?? 'academic');
-        setDefaultEssayType(data.defaultEssayType ?? 'argumentative');
         setPreferredEssayLength(data.essayLength ?? 'medium');
         setAnalyticsEnabled(data.analyticsEnabled ?? true);
         setDataSharing(data.dataSharing ?? false);
+        
+        // Set local state for manual save sections
+        setLocalWritingStyle(data.writingStyle ?? 'academic');
+        setLocalPreferredEssayLength(data.essayLength ?? 'medium');
+        setLocalAutoSaveFrequency(data.autoSaveFrequency ?? '30');
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -91,59 +103,6 @@ export default function SettingsPage() {
     setAppTheme(e.target.value);
   };
 
-  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !session?.user) return;
-    setUploading(true);
-    setUploadError('');
-    try {
-      // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      // Use email as unique identifier if id is not available
-      const userIdentifier = session.user.email ? session.user.email.replace(/[^a-zA-Z0-9]/g, '_') : 'user';
-      const fileName = `${userIdentifier}_${Date.now()}.${fileExt}`;
-      const { data, error, status } = await supabase.storage
-        .from('profile-pictures')
-        .upload(fileName, file, { upsert: true });
-      if (error) {
-        console.error('Supabase upload error:', {
-          status,
-          message: error.message,
-          error,
-          data,
-        });
-        setUploadError('Failed to upload image. Please try again.');
-        return;
-      }
-      // Get public URL
-      const { data: publicUrlData, error: publicUrlError } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(fileName);
-      if (publicUrlError) {
-        console.error('Supabase getPublicUrl error:', publicUrlError);
-        setUploadError('Failed to get public URL.');
-        return;
-      }
-      const publicUrl = publicUrlData?.publicUrl;
-      if (!publicUrl) {
-        console.error('No public URL returned from Supabase:', publicUrlData);
-        setUploadError('Failed to get public URL.');
-        return;
-      }
-      setProfilePictureUrl(publicUrl); // Instantly update UI
-      autoSaveSetting({ profilePictureUrl: publicUrl });
-      console.log('Profile image uploaded successfully:', publicUrl);
-    } catch (error: any) {
-      setUploadError('Failed to upload image. Please try again.');
-      console.error('Unexpected upload error:', error);
-      if (error && error.message) {
-        console.error('Upload error message:', error.message);
-      }
-    } finally {
-      setUploading(false);
-    }
-  };
-
   // Auto-save handler
   const autoSaveSetting = (updates: Partial<any>) => {
     setSaving(true);
@@ -153,12 +112,8 @@ export default function SettingsPage() {
       if (key === 'theme') {
         setTheme(value as string);
         setAppTheme(value as string);
-      } else if (key === 'profilePictureUrl') {
-        setProfilePictureUrl(value as string);
       } else if (key === 'emailNotifications') {
         setEmailNotifications(!!value);
-      } else if (key === 'pushNotifications') {
-        setPushNotifications(!!value);
       } else if (key === 'showWritingTips') {
         setShowWritingTips(!!value);
       } else if (key === 'language') {
@@ -167,8 +122,6 @@ export default function SettingsPage() {
         setAutoSaveFrequency(value as string);
       } else if (key === 'writingStyle') {
         setWritingStyle(value as string);
-      } else if (key === 'defaultEssayType') {
-        setDefaultEssayType(value as string);
       } else if (key === 'essayLength') {
         setPreferredEssayLength(value as string);
       } else if (key === 'analyticsEnabled') {
@@ -182,15 +135,12 @@ export default function SettingsPage() {
         method: 'POST',
       headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-        profilePictureUrl,
           emailNotifications,
-          pushNotifications,
           showWritingTips,
           theme,
           language,
           autoSaveFrequency,
           writingStyle,
-          defaultEssayType,
           essayLength: preferredEssayLength,
           analyticsEnabled,
           dataSharing,
@@ -207,6 +157,81 @@ export default function SettingsPage() {
       })
       .catch(() => setMessage('Failed to save.'))
       .finally(() => setSaving(false));
+  };
+
+  // Save writing preferences manually
+  const saveWritingPreferences = async () => {
+    setWritingPreferencesSaving(true);
+    setWritingPreferencesMessage('');
+    
+    try {
+      const response = await fetch('/api/user-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailNotifications,
+          showWritingTips,
+          theme,
+          language,
+          autoSaveFrequency,
+          writingStyle: localWritingStyle,
+          essayLength: localPreferredEssayLength,
+          analyticsEnabled,
+          dataSharing,
+        }),
+      });
+
+      if (response.ok) {
+        // Update the main state to reflect saved values
+        setWritingStyle(localWritingStyle);
+        setPreferredEssayLength(localPreferredEssayLength);
+        setWritingPreferencesMessage('Writing preferences saved!');
+        setTimeout(() => setWritingPreferencesMessage(''), 1500);
+      } else {
+        setWritingPreferencesMessage('Failed to save writing preferences.');
+      }
+    } catch (error) {
+      setWritingPreferencesMessage('Failed to save writing preferences.');
+    } finally {
+      setWritingPreferencesSaving(false);
+    }
+  };
+
+  // Save auto-save settings manually
+  const saveAutoSaveSettings = async () => {
+    setAutoSaveSaving(true);
+    setAutoSaveMessage('');
+    
+    try {
+      const response = await fetch('/api/user-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailNotifications,
+          showWritingTips,
+          theme,
+          language,
+          autoSaveFrequency: localAutoSaveFrequency,
+          writingStyle,
+          essayLength: preferredEssayLength,
+          analyticsEnabled,
+          dataSharing,
+        }),
+      });
+
+      if (response.ok) {
+        // Update the main state to reflect saved values
+        setAutoSaveFrequency(localAutoSaveFrequency);
+        setAutoSaveMessage('Auto-save settings saved!');
+        setTimeout(() => setAutoSaveMessage(''), 1500);
+      } else {
+        setAutoSaveMessage('Failed to save auto-save settings.');
+      }
+    } catch (error) {
+      setAutoSaveMessage('Failed to save auto-save settings.');
+    } finally {
+      setAutoSaveSaving(false);
+    }
   };
 
   if (loading) {
@@ -290,45 +315,17 @@ export default function SettingsPage() {
         {/* User Profile Picture and Info at Top (Unified) */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-lg border-4 border-white mb-3">
-                    {profilePictureUrl ? (
-                      <img 
-                        src={profilePictureUrl} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                        <User className="h-8 w-8 text-white" />
-                      </div>
-                    )}
-                  {uploading && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin text-white" />
-                    </div>
-                  )}
-                </div>
+                    {/* Remove all profile picture upload, display, and state logic */}
+                    {/* Remove profilePictureUrl state, upload handlers, and UI */}
+                    {/* Remove references to profilePictureUrl in loadSettings, autoSaveSetting, and fetch/save payloads */}
+                    {/* The profile picture section is now removed as per the edit hint */}
+                  </div>
           <h3 className="font-semibold text-gray-900 text-lg">{session?.user?.name || 'User'}</h3>
           <p className="text-gray-600">{session?.user?.email}</p>
-          <div className="mt-4 flex flex-col items-center">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePicUpload}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
-                  >
-                    <Upload className="h-4 w-4" />
-                    {uploading ? 'Uploading...' : 'Upload Photo'}
-                  </button>
-                  {uploadError && (
-                    <p className="text-red-500 text-sm mt-2">{uploadError}</p>
-                  )}
-              </div>
+          {/* Remove all profile picture upload, display, and state logic */}
+          {/* Remove profilePictureUrl state, upload handlers, and UI */}
+          {/* Remove references to profilePictureUrl in loadSettings, autoSaveSetting, and fetch/save payloads */}
+          {/* The profile picture section is now removed as per the edit hint */}
             </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -336,11 +333,25 @@ export default function SettingsPage() {
           <div className="space-y-8">
             {/* Writing Preferences (now first) */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-white" />
-                </div>
-                Writing Preferences
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center justify-between gap-3">
+                <span className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-white" />
+                  </div>
+                  Writing Preferences
+                </span>
+                <button
+                  onClick={saveWritingPreferences}
+                  disabled={writingPreferencesSaving}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow hover:from-green-600 hover:to-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {writingPreferencesSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save
+                </button>
               </h2>
               
               <div className="space-y-6">
@@ -349,8 +360,8 @@ export default function SettingsPage() {
                     Writing Style
                   </label>
                   <select
-                    value={writingStyle}
-                    onChange={(e) => autoSaveSetting({ writingStyle: e.target.value })}
+                    value={localWritingStyle}
+                    onChange={(e) => setLocalWritingStyle(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
                     <option value="academic">Academic</option>
@@ -362,28 +373,11 @@ export default function SettingsPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Default Essay Type
-                  </label>
-                  <select
-                    value={defaultEssayType}
-                    onChange={(e) => autoSaveSetting({ defaultEssayType: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
-                  >
-                    <option value="argumentative">Argumentative</option>
-                    <option value="expository">Expository</option>
-                    <option value="narrative">Narrative</option>
-                    <option value="descriptive">Descriptive</option>
-                    <option value="persuasive">Persuasive</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Preferred Essay Length
                   </label>
                   <select
-                    value={preferredEssayLength}
-                    onChange={(e) => autoSaveSetting({ essayLength: e.target.value })}
+                    value={localPreferredEssayLength}
+                    onChange={(e) => setLocalPreferredEssayLength(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
                     <option value="short">Short (300-500 words)</option>
@@ -392,16 +386,40 @@ export default function SettingsPage() {
                     <option value="extended">Extended (1200+ words)</option>
                   </select>
                 </div>
+
+                {/* Save Button and Status */}
+                {writingPreferencesMessage && (
+                  <div className="flex justify-end mt-2">
+                    <div className={`flex items-center gap-2 text-sm ${writingPreferencesMessage.includes('saved!') ? 'text-green-600' : 'text-red-600'}`}> 
+                      {writingPreferencesMessage.includes('saved!') ? <CheckCircle className="h-4 w-4" /> : null}
+                      {writingPreferencesMessage}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* 3. Auto-save Settings */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-white" />
-                </div>
-                Auto-save Settings
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center justify-between gap-3">
+                <span className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-white" />
+                  </div>
+                  Auto-save Settings
+                </span>
+                <button
+                  onClick={saveAutoSaveSettings}
+                  disabled={autoSaveSaving}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-medium shadow hover:from-orange-600 hover:to-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {autoSaveSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save
+                </button>
               </h2>
               
               <div>
@@ -409,8 +427,8 @@ export default function SettingsPage() {
                   Auto-save Frequency
                 </label>
                 <select
-                  value={autoSaveFrequency}
-                  onChange={(e) => autoSaveSetting({ autoSaveFrequency: e.target.value })}
+                  value={localAutoSaveFrequency}
+                  onChange={(e) => setLocalAutoSaveFrequency(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                 >
                   <option value="15">15 seconds</option>
@@ -422,6 +440,51 @@ export default function SettingsPage() {
                 <p className="text-sm text-gray-600 mt-2">
                   This controls how often your essays are automatically saved
                 </p>
+                {/* Save Button and Status */}
+                {autoSaveMessage && (
+                  <div className="flex justify-end mt-2">
+                    <div className={`flex items-center gap-2 text-sm ${autoSaveMessage.includes('saved!') ? 'text-green-600' : 'text-red-600'}`}> 
+                      {autoSaveMessage.includes('saved!') ? <CheckCircle className="h-4 w-4" /> : null}
+                      {autoSaveMessage}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Test Auto-save Button */}
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <h4 className="text-sm font-semibold text-blue-800 mb-2">Test Auto-save</h4>
+                  <p className="text-xs text-blue-600 mb-3">
+                    This setting controls how often your essays are automatically saved while writing in the Essay Generator, Rewriter, and Submit pages.
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-blue-700">
+                      Current: Every {localAutoSaveFrequency} seconds
+                    </span>
+                    <button
+                      onClick={() => {
+                        // Test auto-save by saving a sample draft
+                        fetch('/api/autoSave', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            content: 'This is a test auto-save draft created at ' + new Date().toLocaleTimeString(),
+                            topic: 'Auto-save Test',
+                            type: 'Test'
+                          })
+                        }).then(() => {
+                          setAutoSaveMessage('Test auto-save successful!');
+                          setTimeout(() => setAutoSaveMessage(''), 3000);
+                        }).catch(() => {
+                          setAutoSaveMessage('Test auto-save failed.');
+                          setTimeout(() => setAutoSaveMessage(''), 3000);
+                        });
+                      }}
+                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Test Now
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -448,22 +511,6 @@ export default function SettingsPage() {
                       type="checkbox"
                       checked={emailNotifications}
                       onChange={(e) => autoSaveSetting({ emailNotifications: e.target.checked })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-gray-900">Push notifications</h3>
-                    <p className="text-sm text-gray-600">Get real-time browser notifications</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={pushNotifications}
-                      onChange={(e) => autoSaveSetting({ pushNotifications: e.target.checked })}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>

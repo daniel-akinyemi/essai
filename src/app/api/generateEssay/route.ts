@@ -205,7 +205,7 @@ function extractFirstJsonArray(text: string): any {
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, format = 'clean', checkRelevance: checkRelevanceEnabled = false, citationsEnabled = true } = await request.json();
+    const { topic, format = 'clean', checkRelevance: checkRelevanceEnabled = false, citationsEnabled = true, writingStyle = 'academic', essayLength = 'medium' } = await request.json();
     
     if (!topic || typeof topic !== 'string' || topic.length < 5) {
       return NextResponse.json({ error: 'A valid essay topic is required.' }, { status: 400 });
@@ -216,16 +216,47 @@ export async function POST(request: NextRequest) {
     // Fix: Use 'sub' or fallback to 'id' for user id
     const userId = (session?.user as any)?.id || (session?.user as any)?.sub;
 
+    // Get user settings if not provided
+    let userWritingStyle = writingStyle;
+    let userEssayLength = essayLength;
+    
+    if (userId && (!writingStyle || !essayLength)) {
+      try {
+        const userSettings = await prisma.userSettings.findUnique({
+          where: { userId }
+        });
+        if (userSettings) {
+          userWritingStyle = userWritingStyle || userSettings.writingStyle || 'academic';
+          userEssayLength = userEssayLength || userSettings.essayLength || 'medium';
+        }
+      } catch (error) {
+        console.error('Error fetching user settings:', error);
+      }
+    }
+
+    // Map essay length to word count
+    const lengthMap = {
+      'short': '300-500',
+      'medium': '500-800', 
+      'long': '800-1200',
+      'extended': '1200-1500'
+    };
+    const targetLength = lengthMap[userEssayLength as keyof typeof lengthMap] || '500-800';
+
     // Essay generation
     let essay;
     try {
-    const systemPrompt = format === 'structured' ? structuredPrompt : cleanPrompt;
-    const userPrompt = `ESSAY_TOPIC: ${topic}`;
-    const messages: OpenRouterMessage[] = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ];
-    const mistralModel = 'mistralai/mistral-7b-instruct:free';
+      const systemPrompt = format === 'structured' ? structuredPrompt : cleanPrompt;
+      const userPrompt = `ESSAY_TOPIC: ${topic}
+WRITING_STYLE: ${userWritingStyle}
+TARGET_LENGTH: ${targetLength} words
+
+Please generate an essay in ${userWritingStyle} style with a target length of ${targetLength} words.`;
+      const messages: OpenRouterMessage[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ];
+      const mistralModel = 'mistralai/mistral-7b-instruct:free';
       essay = await openRouterClient.chatCompletion(messages, mistralModel);
     } catch (aiError) {
       console.error('AI essay generation failed:', aiError);

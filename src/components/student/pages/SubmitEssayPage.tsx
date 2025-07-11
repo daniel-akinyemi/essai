@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { FileText, Upload, Send, CheckCircle, AlertCircle, Loader2, Star, TrendingUp, Target, Award, Zap } from "lucide-react";
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { FileText, CheckCircle, AlertCircle, Loader2, Target, TrendingUp, Award, Clock, Zap, Upload } from 'lucide-react';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { AutoSaveStatus } from '@/components/ui/auto-save-status';
 
 interface CleanEssayScore {
   essayTitle: string;
@@ -27,6 +29,72 @@ export default function SubmitEssayPage() {
   const [error, setError] = useState('');
   const { data: session } = useSession();
   const [autoSaveMessage, setAutoSaveMessage] = useState('');
+
+  // User settings state
+  const [userSettings, setUserSettings] = useState({
+    autoSaveFrequency: '30'
+  });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // Load user settings on component mount
+  useEffect(() => {
+    if (session?.user) {
+      loadUserSettings();
+    }
+  }, [session?.user]);
+
+  const loadUserSettings = async () => {
+    try {
+      const response = await fetch('/api/user-settings', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserSettings({
+          autoSaveFrequency: data.autoSaveFrequency || '30'
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user settings:', error);
+    } finally {
+      setSettingsLoaded(true);
+    }
+  };
+
+  // Auto-save functionality
+  const autoSaveHandler = async (content: string) => {
+    if (!content.trim() || !session?.user) return;
+    
+    try {
+      const response = await fetch('/api/autoSave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          topic: topic || 'Essay draft',
+          type: 'Draft'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Auto-save failed');
+      }
+    } catch (error) {
+      console.error('Auto-save error:', error);
+      throw error;
+    }
+  };
+
+  const { isSaving, saveStatus, saveNow } = useAutoSave({
+    content,
+    autoSaveFrequency: userSettings.autoSaveFrequency, // Use user's preferred frequency
+    onSave: autoSaveHandler,
+    enabled: !!session?.user && content.length > 50
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,9 +244,19 @@ export default function SubmitEssayPage() {
               />
                 <div className="flex justify-between items-center text-sm text-gray-500">
                   <span>{content.length} characters</span>
-                  <span className={content.length < 100 ? 'text-red-500' : 'text-green-600'}>
-                    {content.length < 100 ? `${100 - content.length} more needed` : '✓ Minimum met'}
-                  </span>
+                  <div className="flex items-center space-x-4">
+                    {/* Auto-save Status */}
+                    {session?.user && content.length > 50 && (
+                      <AutoSaveStatus 
+                        status={saveStatus} 
+                        frequency={userSettings.autoSaveFrequency}
+                        className="text-sm"
+                      />
+                    )}
+                    <span className={content.length < 100 ? 'text-red-500' : 'text-green-600'}>
+                      {content.length < 100 ? `${100 - content.length} more needed` : '✓ Minimum met'}
+                    </span>
+                  </div>
                 </div>
             </div>
 

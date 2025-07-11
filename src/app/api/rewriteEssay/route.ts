@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { originalEssay, instructions, requestType } = body;
+    const { originalEssay, instructions, requestType, writingStyle = 'academic' } = body;
 
     if (!originalEssay || typeof originalEssay !== 'string') {
       return NextResponse.json({ error: 'Original essay is required' }, { status: 400 });
@@ -23,6 +24,23 @@ export async function POST(request: NextRequest) {
 
     if (originalEssay.length > 10000) {
       return NextResponse.json({ error: 'Essay must be less than 10,000 characters' }, { status: 400 });
+    }
+
+    // Get user settings if writingStyle not provided
+    let userWritingStyle = writingStyle;
+    const userId = (session?.user as any)?.id || (session?.user as any)?.sub;
+    
+    if (userId && !writingStyle) {
+      try {
+        const userSettings = await prisma.userSettings.findUnique({
+          where: { userId }
+        });
+        if (userSettings) {
+          userWritingStyle = userSettings.writingStyle || 'academic';
+        }
+      } catch (error) {
+        console.error('Error fetching user settings:', error);
+      }
     }
 
     // Lazy load the OpenRouter client to catch initialization errors
@@ -47,7 +65,8 @@ export async function POST(request: NextRequest) {
         success: true 
       });
     } else {
-      result = await openRouterClient.rewriteEssay(originalEssay, instructions, mistralModel);
+      // Pass writing style to the rewrite function
+      result = await openRouterClient.rewriteEssay(originalEssay, instructions, mistralModel, userWritingStyle);
       return NextResponse.json({ 
         rewrittenEssay: result,
         originalEssay,

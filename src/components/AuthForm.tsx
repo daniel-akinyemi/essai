@@ -150,6 +150,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               name="password"
               type={showPassword ? "text" : "password"}
               required
+              minLength={6}
               placeholder="Enter your password"
               autoComplete={mode === "signup" ? "new-password" : "current-password"}
               className="pl-10 pr-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
@@ -163,6 +164,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          {mode === "signup" && (
+            <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters.</p>
+          )}
         </div>
         
           {mode === "signup" && (
@@ -177,6 +181,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 name="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 required
+                minLength={6}
                 placeholder="Confirm your password"
                 autoComplete="new-password"
                 className="pl-10 pr-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"

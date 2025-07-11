@@ -20,9 +20,12 @@ import {
   Sparkles,
   LogOut
 } from 'lucide-react';
+import { useTheme } from '@/components/Providers';
+import supabase from '@/lib/supabase/client';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const { theme: appTheme, setTheme: setAppTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -31,7 +34,7 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Settings state
-  const [profilePicUrl, setProfilePicUrl] = useState('');
+  const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
   const [showWritingTips, setShowWritingTips] = useState(true);
@@ -62,7 +65,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setProfilePicUrl(data.profilePictureUrl || '');
+        setProfilePictureUrl(data.profilePictureUrl || '');
         setEmailNotifications(data.emailNotifications ?? true);
         setPushNotifications(data.pushNotifications ?? false);
         setShowWritingTips(data.showWritingTips ?? true);
@@ -82,38 +85,104 @@ export default function SettingsPage() {
     }
   };
 
+  // When user selects a new theme, update both local state and app theme instantly
+  const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTheme(e.target.value);
+    setAppTheme(e.target.value);
+  };
+
   const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !session?.user) return;
-    
     setUploading(true);
     setUploadError('');
-    
     try {
-      // For now, we'll use a placeholder URL since we don't have file upload set up
-      // In a real app, you'd upload to a service like Cloudinary, AWS S3, etc.
-      const placeholderUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.name || 'User')}&background=6366f1&color=fff&size=200`;
-      setProfilePicUrl(placeholderUrl);
-    } catch (error) {
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      // Use email as unique identifier if id is not available
+      const userIdentifier = session.user.email ? session.user.email.replace(/[^a-zA-Z0-9]/g, '_') : 'user';
+      const fileName = `${userIdentifier}_${Date.now()}.${fileExt}`;
+      const { data, error, status } = await supabase.storage
+        .from('profile-pictures')
+        .upload(fileName, file, { upsert: true });
+      if (error) {
+        console.error('Supabase upload error:', {
+          status,
+          message: error.message,
+          error,
+          data,
+        });
+        setUploadError('Failed to upload image. Please try again.');
+        return;
+      }
+      // Get public URL
+      const { data: publicUrlData, error: publicUrlError } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(fileName);
+      if (publicUrlError) {
+        console.error('Supabase getPublicUrl error:', publicUrlError);
+        setUploadError('Failed to get public URL.');
+        return;
+      }
+      const publicUrl = publicUrlData?.publicUrl;
+      if (!publicUrl) {
+        console.error('No public URL returned from Supabase:', publicUrlData);
+        setUploadError('Failed to get public URL.');
+        return;
+      }
+      setProfilePictureUrl(publicUrl); // Instantly update UI
+      autoSaveSetting({ profilePictureUrl: publicUrl });
+      console.log('Profile image uploaded successfully:', publicUrl);
+    } catch (error: any) {
       setUploadError('Failed to upload image. Please try again.');
-      console.error('Upload error:', error);
+      console.error('Unexpected upload error:', error);
+      if (error && error.message) {
+        console.error('Upload error message:', error.message);
+      }
     } finally {
       setUploading(false);
     }
   };
 
-  const saveSettings = async () => {
+  // Auto-save handler
+  const autoSaveSetting = (updates: Partial<any>) => {
     setSaving(true);
     setMessage('');
-    
-    try {
-      const response = await fetch('/api/user-settings', {
+    // Update local state
+    Object.entries(updates).forEach(([key, value]) => {
+      if (key === 'theme') {
+        setTheme(value as string);
+        setAppTheme(value as string);
+      } else if (key === 'profilePictureUrl') {
+        setProfilePictureUrl(value as string);
+      } else if (key === 'emailNotifications') {
+        setEmailNotifications(!!value);
+      } else if (key === 'pushNotifications') {
+        setPushNotifications(!!value);
+      } else if (key === 'showWritingTips') {
+        setShowWritingTips(!!value);
+      } else if (key === 'language') {
+        setLanguage(value as string);
+      } else if (key === 'autoSaveFrequency') {
+        setAutoSaveFrequency(value as string);
+      } else if (key === 'writingStyle') {
+        setWritingStyle(value as string);
+      } else if (key === 'defaultEssayType') {
+        setDefaultEssayType(value as string);
+      } else if (key === 'essayLength') {
+        setPreferredEssayLength(value as string);
+      } else if (key === 'analyticsEnabled') {
+        setAnalyticsEnabled(!!value);
+      } else if (key === 'dataSharing') {
+        setDataSharing(!!value);
+      }
+    });
+    // Save to backend
+    fetch('/api/user-settings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          profilePictureUrl: profilePicUrl,
+        profilePictureUrl,
           emailNotifications,
           pushNotifications,
           showWritingTips,
@@ -125,29 +194,76 @@ export default function SettingsPage() {
           essayLength: preferredEssayLength,
           analyticsEnabled,
           dataSharing,
-        }),
-      });
-
-      if (response.ok) {
-        setMessage('Settings saved successfully!');
-        setTimeout(() => setMessage(''), 3000);
+        ...updates,
+      }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          setMessage('Saved!');
+          setTimeout(() => setMessage(''), 1500);
       } else {
-        throw new Error('Failed to save settings');
-      }
-    } catch (error) {
-      setMessage('Failed to save settings. Please try again.');
-      console.error('Error saving settings:', error);
-    } finally {
-      setSaving(false);
-    }
+          setMessage('Failed to save.');
+        }
+      })
+      .catch(() => setMessage('Failed to save.'))
+      .finally(() => setSaving(false));
   };
 
   if (loading) {
+    // Render layout instantly and show skeletons for profile and settings sections
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading your settings...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center gap-3 mb-4 p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <Settings className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <div className="h-8 w-40 bg-gray-200 rounded mb-2 animate-pulse" />
+                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+          {/* Profile Skeleton */}
+          <div className="flex flex-col items-center mb-10">
+            <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg border-4 border-white mb-3 bg-gray-200 animate-pulse" />
+            <div className="h-5 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+            <div className="h-4 w-48 bg-gray-100 rounded animate-pulse" />
+            <div className="mt-4 h-10 w-40 bg-gray-200 rounded-xl animate-pulse" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column Skeletons */}
+            <div className="space-y-8">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                <div className="h-6 w-40 bg-gray-200 rounded mb-6 animate-pulse" />
+                <div className="space-y-6">
+                  <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                <div className="h-6 w-40 bg-gray-200 rounded mb-6 animate-pulse" />
+                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+              </div>
+            </div>
+            {/* Right Column Skeletons */}
+            <div className="space-y-8">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                <div className="h-6 w-40 bg-gray-200 rounded mb-6 animate-pulse" />
+                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                <div className="h-6 w-40 bg-gray-200 rounded mb-6 animate-pulse" />
+                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 w-64 bg-gray-100 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -171,24 +287,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column */}
-          <div className="space-y-8">
-            {/* 1. Profile Picture Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
-                </div>
-                Profile Picture
-              </h2>
-              
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full overflow-hidden shadow-lg border-4 border-white">
-                    {profilePicUrl ? (
+        {/* User Profile Picture and Info at Top (Unified) */}
+        <div className="flex flex-col items-center mb-10">
+          <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-lg border-4 border-white mb-3">
+                    {profilePictureUrl ? (
                       <img 
-                        src={profilePicUrl} 
+                        src={profilePictureUrl} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
                       />
@@ -197,15 +301,15 @@ export default function SettingsPage() {
                         <User className="h-8 w-8 text-white" />
                       </div>
                     )}
-                  </div>
                   {uploading && (
                     <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-white" />
                     </div>
                   )}
                 </div>
-                
-                <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 text-lg">{session?.user?.name || 'User'}</h3>
+          <p className="text-gray-600">{session?.user?.email}</p>
+          <div className="mt-4 flex flex-col items-center">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -224,11 +328,13 @@ export default function SettingsPage() {
                   {uploadError && (
                     <p className="text-red-500 text-sm mt-2">{uploadError}</p>
                   )}
-                </div>
               </div>
             </div>
 
-            {/* 2. Writing Preferences */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column */}
+          <div className="space-y-8">
+            {/* Writing Preferences (now first) */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
@@ -244,7 +350,7 @@ export default function SettingsPage() {
                   </label>
                   <select
                     value={writingStyle}
-                    onChange={(e) => setWritingStyle(e.target.value)}
+                    onChange={(e) => autoSaveSetting({ writingStyle: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
                     <option value="academic">Academic</option>
@@ -260,7 +366,7 @@ export default function SettingsPage() {
                   </label>
                   <select
                     value={defaultEssayType}
-                    onChange={(e) => setDefaultEssayType(e.target.value)}
+                    onChange={(e) => autoSaveSetting({ defaultEssayType: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
                     <option value="argumentative">Argumentative</option>
@@ -277,7 +383,7 @@ export default function SettingsPage() {
                   </label>
                   <select
                     value={preferredEssayLength}
-                    onChange={(e) => setPreferredEssayLength(e.target.value)}
+                    onChange={(e) => autoSaveSetting({ essayLength: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
                     <option value="short">Short (300-500 words)</option>
@@ -304,7 +410,7 @@ export default function SettingsPage() {
                 </label>
                 <select
                   value={autoSaveFrequency}
-                  onChange={(e) => setAutoSaveFrequency(e.target.value)}
+                  onChange={(e) => autoSaveSetting({ autoSaveFrequency: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                 >
                   <option value="15">15 seconds</option>
@@ -341,7 +447,7 @@ export default function SettingsPage() {
                     <input
                       type="checkbox"
                       checked={emailNotifications}
-                      onChange={(e) => setEmailNotifications(e.target.checked)}
+                      onChange={(e) => autoSaveSetting({ emailNotifications: e.target.checked })}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -357,7 +463,7 @@ export default function SettingsPage() {
                     <input
                       type="checkbox"
                       checked={pushNotifications}
-                      onChange={(e) => setPushNotifications(e.target.checked)}
+                      onChange={(e) => autoSaveSetting({ pushNotifications: e.target.checked })}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -373,7 +479,7 @@ export default function SettingsPage() {
                     <input
                       type="checkbox"
                       checked={showWritingTips}
-                      onChange={(e) => setShowWritingTips(e.target.checked)}
+                      onChange={(e) => autoSaveSetting({ showWritingTips: e.target.checked })}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -401,7 +507,7 @@ export default function SettingsPage() {
                     <input
                       type="checkbox"
                       checked={analyticsEnabled}
-                      onChange={(e) => setAnalyticsEnabled(e.target.checked)}
+                      onChange={(e) => autoSaveSetting({ analyticsEnabled: e.target.checked })}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -417,7 +523,7 @@ export default function SettingsPage() {
                     <input
                       type="checkbox"
                       checked={dataSharing}
-                      onChange={(e) => setDataSharing(e.target.checked)}
+                      onChange={(e) => autoSaveSetting({ dataSharing: e.target.checked })}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -442,7 +548,7 @@ export default function SettingsPage() {
                   </label>
                   <select
                     value={theme}
-                    onChange={(e) => setTheme(e.target.value)}
+                    onChange={handleThemeChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
                     <option value="system">System</option>
@@ -457,7 +563,7 @@ export default function SettingsPage() {
                   </label>
                   <select
                     value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
+                    onChange={(e) => autoSaveSetting({ language: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
                     <option value="en">English</option>
@@ -471,75 +577,46 @@ export default function SettingsPage() {
             </div>
 
             {/* 7. User Menu */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
+            {/* Remove profile info from 'User Profile' card, keep only sign out button at the bottom of the page */}
+          </div>
                 </div>
-                User Profile
-              </h2>
-              
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full overflow-hidden shadow-lg border-4 border-white">
-                  {profilePicUrl ? (
-                    <img 
-                      src={profilePicUrl} 
-                      alt="Profile" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                      <User className="h-6 w-6 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">
-                    {session?.user?.name || 'User'}
-                  </h3>
-                  <p className="text-gray-600">{session?.user?.email}</p>
-                </div>
+
+        {/* Saving Indicator */}
+        {saving && (
+          <div className="mt-8 flex items-center justify-center">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+              <div className="flex items-center gap-2 text-sm text-blue-600">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
               </div>
-              
-              <button
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Save Button */}
+        {message && (
         <div className="mt-8 flex items-center justify-center">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
-            <div className="flex items-center gap-4">
-              {message && (
                 <div className={`flex items-center gap-2 text-sm ${
-                  message.includes('successfully') ? 'text-green-600' : 'text-red-600'
+                message.includes('successfully') || message.includes('Saved!') ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {message.includes('successfully') ? (
+                {message.includes('successfully') || message.includes('Saved!') ? (
                     <CheckCircle className="h-4 w-4" />
                   ) : null}
                   {message}
                 </div>
-              )}
-              <button
-                onClick={saveSettings}
-                disabled={saving}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-medium flex items-center gap-2 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                {saving ? 'Saving...' : 'Save Settings'}
-              </button>
             </div>
           </div>
+        )}
+
+        {/* Sign Out Button at Bottom */}
+        <div className="mt-12 flex items-center justify-center">
+          <button
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className="w-full max-w-xs bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </button>
         </div>
       </div>
     </div>

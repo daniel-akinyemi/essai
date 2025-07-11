@@ -66,7 +66,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
       });
 
       if (signInResult?.error) {
-        setError("Invalid credentials");
+        // If the error is a string (from our thrown errors), show it
+        if (typeof signInResult.error === "string" && signInResult.error !== "CredentialsSignin") {
+          setError(signInResult.error);
+        } else if (signInResult.error === "CredentialsSignin") {
+          setError("Invalid credentials. Please try again.");
+        } else {
+          setError("An unknown error occurred. Please try again.");
+        }
         return;
       }
 

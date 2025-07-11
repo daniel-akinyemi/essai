@@ -103,6 +103,11 @@ export default function SignInPage() {
           {/* Auth Form */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-8">
             <AuthForm mode="signin" />
+            <div className="mt-4 text-center">
+              <a href="/auth/forgot-password" className="text-blue-600 hover:text-blue-500 text-sm font-semibold transition-colors duration-200">
+                Forgot your password?
+              </a>
+            </div>
           </div>
           {/* Footer */}
           <div className="text-center">

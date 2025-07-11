@@ -29,7 +29,7 @@ export const authOptions: NextAuthOptions = {
           .safeParse(credentials);
 
         if (!parsedCredentials.success) {
-          return null;
+          throw new Error("Please enter a valid email and password.");
         }
 
         const { email, password } = parsedCredentials.data;
@@ -38,13 +38,13 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          return null;
+          throw new Error("No account found with that email.");
         }
 
         const passwordsMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordsMatch) {
-          return null;
+          throw new Error("Incorrect password.");
         }
 
         return {

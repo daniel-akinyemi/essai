@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { sendWelcomeEmail } from '@/lib/email/sendEssayNotification';
 
 const userSchema = z.object({
   email: z.string().email(),
@@ -34,6 +35,13 @@ export async function POST(req: Request) {
         name: `${firstName} ${lastName}`,
       },
     });
+
+    // Send welcome email (non-blocking, but log errors)
+    try {
+      await sendWelcomeEmail(email.toLowerCase());
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+    }
 
     return new NextResponse(JSON.stringify({ message: "User created successfully" }), { status: 201 });
   } catch (error) {

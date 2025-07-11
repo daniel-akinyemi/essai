@@ -1,8 +1,13 @@
+"use client";
+
 import AuthForm from "@/components/AuthForm";
 import Link from "next/link";
 import { Sparkles, BookOpen, Target, TrendingUp } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
+  const searchParams = useSearchParams();
+  const signupSuccess = searchParams.get("signup") === "success";
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Features (was right) */}
@@ -89,6 +94,12 @@ export default function SignInPage() {
               </Link>
             </p>
           </div>
+          {/* Success message after signup */}
+          {signupSuccess && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 text-sm text-center animate-fade-in">
+              Account created! Please sign in to continue.
+            </div>
+          )}
           {/* Auth Form */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-8">
             <AuthForm mode="signin" />

@@ -142,7 +142,7 @@ const App = () => {
         <div className="flex items-center gap-3">
           <Home className="h-6 w-6 text-blue-600" />
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        </div>
+          </div>
         <div className="flex items-center gap-4">
           <Link href="/dashboard/settings">
             <Settings className="h-5 w-5 text-gray-400 hover:text-blue-600 cursor-pointer" />
@@ -188,52 +188,52 @@ const App = () => {
                 <div className="h-12 bg-gray-200 rounded-lg animate-pulse" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Essay Topic</label>
-                  <input
-                    className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                    type="text"
-                    value={topic}
-                    onChange={e => setTopic(e.target.value)}
-                    placeholder="Enter your essay topic"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Desired Length (words)</label>
-                  <input
-                    className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                    type="number"
-                    min={50}
-                    max={5000}
-                    step={50}
-                    value={length}
-                    onChange={e => setLength(Number(e.target.value))}
-                    placeholder="e.g. 500"
-                    list="length-options"
-                  />
-                  <datalist id="length-options">
-                    <option value="250" />
-                    <option value="500" />
-                    <option value="750" />
-                    <option value="1000" />
-                  </datalist>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Tone</label>
-                  <select
-                    className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={tone}
-                    onChange={e => setTone(e.target.value)}
-                  >
-                    <option value="Neutral">Neutral</option>
-                    <option value="Formal">Formal</option>
-                    <option value="Informal">Informal</option>
-                    <option value="Persuasive">Persuasive</option>
-                    <option value="Academic">Academic</option>
-                  </select>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium mb-1">Essay Topic</label>
+                <input
+                  className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  type="text"
+                  value={topic}
+                  onChange={e => setTopic(e.target.value)}
+                  placeholder="Enter your essay topic"
+                />
+      </div>
+      <div className="flex flex-col">
+        <label className="text-sm font-medium mb-1">Desired Length (words)</label>
+        <input
+          className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+          type="number"
+          min={50}
+          max={5000}
+          step={50}
+          value={length}
+          onChange={e => setLength(Number(e.target.value))}
+          placeholder="e.g. 500"
+          list="length-options"
+        />
+        <datalist id="length-options">
+          <option value="250" />
+          <option value="500" />
+          <option value="750" />
+          <option value="1000" />
+        </datalist>
+      </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium mb-1">Tone</label>
+                <select
+                  className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={tone}
+                  onChange={e => setTone(e.target.value)}
+                >
+                  <option value="Neutral">Neutral</option>
+                  <option value="Formal">Formal</option>
+                  <option value="Informal">Informal</option>
+                  <option value="Persuasive">Persuasive</option>
+                  <option value="Academic">Academic</option>
+                </select>
               </div>
+            </div>
             )}
             <button
               className="mt-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg px-6 py-2 font-semibold shadow hover:from-blue-700 hover:to-purple-700 transition flex items-center gap-2 disabled:opacity-60"
@@ -294,9 +294,9 @@ const App = () => {
                       <div className="h-3 bg-gray-100 rounded w-1/3" />
                     </div>
                     <span className="inline-block px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-medium whitespace-nowrap h-5 w-16" />
-                  </li>
-                ))}
-              </ul>
+                </li>
+              ))}
+            </ul>
             ) : (
               <ul className="relative border-l-2 border-blue-100 pl-6 max-h-80 overflow-y-auto">
                 {recentActivity.length === 0 ? (

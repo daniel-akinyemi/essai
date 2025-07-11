@@ -53,6 +53,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
           const errorData = await res.json();
           throw new Error(errorData.message || "Something went wrong");
         }
+        // Redirect to sign-in page with success message
+        router.push("/auth/signin?signup=success");
+        return;
       }
 
       const signInResult = await signIn("credentials", {

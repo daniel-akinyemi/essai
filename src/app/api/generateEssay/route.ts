@@ -5,6 +5,7 @@ import { checkRelevance } from '@/lib/essayScoring/relevanceChecker';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/auth";
 import { prisma } from '@/lib/prisma';
+import { sendEssayNotification } from '@/lib/email/sendEssayNotification';
 
 const structuredPrompt = `Role & Context:
 You are an advanced AI essay generator, designed to first analyze a given topic to determine the most suitable essay type, and then produce a high-quality, well-structured, and relevant essay draft. You should act as an intelligent academic writing assistant.
@@ -253,6 +254,14 @@ export async function POST(request: NextRequest) {
         });
         essayId = savedEssay.id;
         console.log('Essay saved to history with ID:', essayId);
+        // Send essay notification email if user has email
+        if (session?.user?.email) {
+          try {
+            await sendEssayNotification(session.user.email, topic);
+          } catch (emailError) {
+            console.error('Failed to send essay notification email:', emailError);
+          }
+        }
       } catch (dbError) {
         console.error('DB error while saving essay:', dbError);
       }

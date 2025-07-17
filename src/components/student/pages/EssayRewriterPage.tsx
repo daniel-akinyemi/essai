@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Edit3, Copy, Download, CheckCircle, AlertCircle, Loader2, Eye, EyeOff, RefreshCw, Sparkles } from 'lucide-react';
+import { Edit3, Copy, Download, CheckCircle, AlertCircle, Loader2, Eye, EyeOff, RefreshCw, Sparkles, Lightbulb, RotateCcw, Settings } from 'lucide-react';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { AutoSaveStatus } from '@/components/ui/auto-save-status';
 
@@ -32,6 +32,14 @@ export default function EssayRewriterPage() {
   const { data: session } = useSession();
   const [autoSaveMessage, setAutoSaveMessage] = useState('');
 
+  // User settings state
+  const [userSettings, setUserSettings] = useState({
+    writingStyle: 'academic',
+    autoSaveFrequency: '30',
+    showWritingTips: true,
+  });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
   // Auto-save functionality
   const autoSaveHandler = async (content: string) => {
     if (!content.trim() || !session?.user) return;
@@ -58,17 +66,10 @@ export default function EssayRewriterPage() {
 
   const { isSaving, saveStatus, saveNow } = useAutoSave({
     content: originalEssay,
-    autoSaveFrequency: userSettings.autoSaveFrequency,
+    autoSaveFrequency: userSettings?.autoSaveFrequency || '30',
     onSave: autoSaveHandler,
     enabled: !!session?.user && originalEssay.length > 50
   });
-
-  // User settings state
-  const [userSettings, setUserSettings] = useState({
-    writingStyle: 'academic',
-    autoSaveFrequency: '30'
-  });
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   // Load user settings on component mount
   useEffect(() => {
@@ -90,7 +91,8 @@ export default function EssayRewriterPage() {
         const data = await response.json();
         setUserSettings({
           writingStyle: data.writingStyle || 'academic',
-          autoSaveFrequency: data.autoSaveFrequency || '30'
+          autoSaveFrequency: data.autoSaveFrequency || '30',
+          showWritingTips: data.showWritingTips !== false,
         });
       }
     } catch (error) {
@@ -132,7 +134,7 @@ export default function EssayRewriterPage() {
           originalEssay,
           instructions: instructions.trim() || undefined,
           requestType: 'rewrite',
-          writingStyle: userSettings.writingStyle
+          writingStyle: userSettings.writingStyle && userSettings.writingStyle !== 'none' ? userSettings.writingStyle : 'academic'
         }),
       });
 
@@ -558,6 +560,7 @@ export default function EssayRewriterPage() {
             </div>
 
             {/* Tips */}
+            {userSettings.showWritingTips && (
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
               <h3 className="font-bold text-blue-900 mb-4 text-lg">Pro Tips</h3>
               <div className="space-y-3 text-blue-800">
@@ -579,6 +582,7 @@ export default function EssayRewriterPage() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>

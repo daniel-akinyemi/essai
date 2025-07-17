@@ -90,7 +90,7 @@ export default function ParagraphAnalyzerPage() {
 
   const { isSaving, saveStatus, saveNow } = useAutoSave({
     content: essay,
-    autoSaveFrequency: userSettings.autoSaveFrequency, // Use user's preferred frequency
+    autoSaveFrequency: userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none' ? userSettings.autoSaveFrequency : '30', // Use user's preferred frequency or default
     onSave: autoSaveHandler,
     enabled: !!session?.user && essay.length > 50
   });
@@ -239,7 +239,7 @@ export default function ParagraphAnalyzerPage() {
                     {session?.user && essay.length > 50 && (
                       <AutoSaveStatus 
                         status={saveStatus} 
-                        frequency={userSettings.autoSaveFrequency}
+                        frequency={userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none' ? userSettings.autoSaveFrequency : '30'}
                         className="text-sm"
                       />
                     )}

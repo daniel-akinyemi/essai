@@ -25,7 +25,7 @@ export default function Home() {
             </p>
             <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-delay-2">
               <Link
-                href="/signup"
+                href="/auth/signup"
                 className="group relative px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium overflow-hidden hover:-translate-y-1 transition-all duration-300"
               >
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-600 to-indigo-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
@@ -189,7 +189,7 @@ fetch('https://api.essai.com/v1/analyze', {
             Join thousands of students and educators who are already using Essai
           </p>
           <Link
-            href="/signup"
+            href="/auth/signup"
             className="mt-8 inline-block px-8 py-4 rounded-xl bg-white text-indigo-600 font-medium hover:bg-indigo-50 transition-colors shadow-xl shadow-indigo-900/20 hover:-translate-y-1"
           >
             Start Free Trial

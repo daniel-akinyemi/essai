@@ -253,9 +253,9 @@ export default function SubmitEssayPage() {
                         className="text-sm"
                       />
                     )}
-                    <span className={content.length < 100 ? 'text-red-500' : 'text-green-600'}>
-                      {content.length < 100 ? `${100 - content.length} more needed` : '✓ Minimum met'}
-                    </span>
+                  <span className={content.length < 100 ? 'text-red-500' : 'text-green-600'}>
+                    {content.length < 100 ? `${100 - content.length} more needed` : '✓ Minimum met'}
+                  </span>
                   </div>
                 </div>
             </div>

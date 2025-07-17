@@ -313,20 +313,25 @@ export default function SettingsPage() {
         </div>
 
         {/* User Profile Picture and Info at Top (Unified) */}
+        {/* Modern User Profile Card */}
         <div className="flex flex-col items-center mb-10">
-          <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-lg border-4 border-white mb-3">
-                    {/* Remove all profile picture upload, display, and state logic */}
-                    {/* Remove profilePictureUrl state, upload handlers, and UI */}
-                    {/* Remove references to profilePictureUrl in loadSettings, autoSaveSetting, and fetch/save payloads */}
-                    {/* The profile picture section is now removed as per the edit hint */}
-                  </div>
-          <h3 className="font-semibold text-gray-900 text-lg">{session?.user?.name || 'User'}</h3>
-          <p className="text-gray-600">{session?.user?.email}</p>
-          {/* Remove all profile picture upload, display, and state logic */}
-          {/* Remove profilePictureUrl state, upload handlers, and UI */}
-          {/* Remove references to profilePictureUrl in loadSettings, autoSaveSetting, and fetch/save payloads */}
-          {/* The profile picture section is now removed as per the edit hint */}
+          <div className="w-full max-w-lg relative">
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 blur-xl opacity-60" style={{ zIndex: 0 }} />
+            <div className="relative z-10 p-8 rounded-3xl shadow-2xl flex items-center gap-6 bg-white/30 backdrop-blur-xl border border-white/30">
+              <div className="flex-shrink-0 w-20 h-20 bg-white/40 rounded-full flex items-center justify-center shadow-lg border-4 border-white/30">
+                {session?.user?.name ? (
+                  <span className="text-4xl font-extrabold text-indigo-600">{session.user.name.charAt(0).toUpperCase()}</span>
+                ) : (
+                  <User className="w-10 h-10 text-indigo-600" />
+                )}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold text-gray-900 drop-shadow-sm">{session?.user?.name || 'User'}</span>
+                <span className="text-base text-gray-700/80 mt-1">{session?.user?.email}</span>
+              </div>
             </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column */}
@@ -364,6 +369,7 @@ export default function SettingsPage() {
                     onChange={(e) => setLocalWritingStyle(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
+                    <option value="none">None</option>
                     <option value="academic">Academic</option>
                     <option value="creative">Creative</option>
                     <option value="professional">Professional</option>
@@ -380,6 +386,7 @@ export default function SettingsPage() {
                     onChange={(e) => setLocalPreferredEssayLength(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                   >
+                    <option value="none">None</option>
                     <option value="short">Short (300-500 words)</option>
                     <option value="medium">Medium (500-800 words)</option>
                     <option value="long">Long (800-1200 words)</option>
@@ -431,6 +438,7 @@ export default function SettingsPage() {
                   onChange={(e) => setLocalAutoSaveFrequency(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
                 >
+                  <option value="none">None</option>
                   <option value="15">15 seconds</option>
                   <option value="30">30 seconds</option>
                   <option value="60">1 minute</option>
@@ -449,42 +457,6 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 )}
-                
-                {/* Test Auto-save Button */}
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                  <h4 className="text-sm font-semibold text-blue-800 mb-2">Test Auto-save</h4>
-                  <p className="text-xs text-blue-600 mb-3">
-                    This setting controls how often your essays are automatically saved while writing in the Essay Generator, Rewriter, and Submit pages.
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-blue-700">
-                      Current: Every {localAutoSaveFrequency} seconds
-                    </span>
-                    <button
-                      onClick={() => {
-                        // Test auto-save by saving a sample draft
-                        fetch('/api/autoSave', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            content: 'This is a test auto-save draft created at ' + new Date().toLocaleTimeString(),
-                            topic: 'Auto-save Test',
-                            type: 'Test'
-                          })
-                        }).then(() => {
-                          setAutoSaveMessage('Test auto-save successful!');
-                          setTimeout(() => setAutoSaveMessage(''), 3000);
-                        }).catch(() => {
-                          setAutoSaveMessage('Test auto-save failed.');
-                          setTimeout(() => setAutoSaveMessage(''), 3000);
-                        });
-                      }}
-                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Test Now
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -580,51 +552,8 @@ export default function SettingsPage() {
             </div>
 
             {/* 6. Appearance */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center">
-                  <Palette className="h-4 w-4 text-white" />
-                </div>
-                Appearance
-              </h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Theme
-                  </label>
-                  <select
-                    value={theme}
-                    onChange={handleThemeChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
-                  >
-                    <option value="system">System</option>
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Language
-                  </label>
-                  <select
-                    value={language}
-                    onChange={(e) => autoSaveSetting({ language: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
-                  >
-                    <option value="en">English</option>
-                    <option value="fr">French</option>
-                    <option value="es">Spanish</option>
-                    <option value="de">German</option>
-                    <option value="zh">Chinese</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* 7. User Menu */}
-            {/* Remove profile info from 'User Profile' card, keep only sign out button at the bottom of the page */}
+            {/* Remove the entire Appearance section (theme/language select and related UI) */}
+            {/* Remove the blank user profile picture circle; just show user's name and email */}
           </div>
                 </div>
 

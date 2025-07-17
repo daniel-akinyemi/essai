@@ -52,7 +52,8 @@ export default function EssayGeneratorPage() {
   const [userSettings, setUserSettings] = useState({
     writingStyle: 'academic',
     essayLength: 'medium',
-    autoSaveFrequency: '30'
+    autoSaveFrequency: '30',
+    showWritingTips: true,
   });
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -97,6 +98,7 @@ export default function EssayGeneratorPage() {
   }, [session?.user]);
 
   const loadUserSettings = async () => {
+    if (!session?.user) return; // Only load if user is authenticated
     try {
       const response = await fetch('/api/user-settings', {
         method: 'GET',
@@ -110,7 +112,8 @@ export default function EssayGeneratorPage() {
         setUserSettings({
           writingStyle: data.writingStyle || 'academic',
           essayLength: data.essayLength || 'medium',
-          autoSaveFrequency: data.autoSaveFrequency || '30'
+          autoSaveFrequency: data.autoSaveFrequency || '30',
+          showWritingTips: data.showWritingTips !== false,
         });
       }
     } catch (error) {
@@ -143,8 +146,9 @@ export default function EssayGeneratorPage() {
           topic, 
           format, 
           checkRelevance,
-          writingStyle: userSettings.writingStyle,
-          essayLength: userSettings.essayLength
+          writingStyle: userSettings.writingStyle && userSettings.writingStyle !== 'none' ? userSettings.writingStyle : 'academic',
+          essayLength: userSettings.essayLength && userSettings.essayLength !== 'none' ? userSettings.essayLength : 'medium',
+          autoSaveFrequency: userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none' ? userSettings.autoSaveFrequency : '30'
         })
       });
       const data = await res.json();
@@ -465,6 +469,7 @@ export default function EssayGeneratorPage() {
             </div>
 
             {/* Writing Tips */}
+            {userSettings.showWritingTips && (
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
@@ -492,6 +497,7 @@ export default function EssayGeneratorPage() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
           </div>

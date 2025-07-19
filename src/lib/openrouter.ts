@@ -74,19 +74,19 @@ export class OpenRouterClient {
   }
 
   async rewriteEssay(originalEssay: string, instructions?: string, model?: string): Promise<string> {
-    const systemPrompt = `You are an expert essay writing assistant. Your task is to rewrite essays to improve their quality while maintaining the original meaning and the author's voice. 
+    const systemPrompt = `You are an academic writing assistant. Your task is to rewrite the provided essay to improve grammar, sentence structure, coherence, and vocabulary. However, you must not change the original topic, subject matter, intended message, or the essay's title.
 
 Guidelines for rewriting:
-1. Improve sentence structure and flow
-2. Enhance vocabulary and word choice (avoid overusing complex words)
-3. Fix grammar, punctuation, and spelling errors
-4. Improve paragraph transitions and coherence
-5. Maintain the original argument and key points
-6. Keep the author's voice and style
-7. Ensure the essay remains authentic and not overly academic
-8. Make the writing more engaging and clear
+1. Do not change the essay’s original title. Keep the title exactly the same as provided.
+2. Rewrite only the body of the essay to improve grammar, clarity, vocabulary, and flow. Do not change the topic, tone, or core meaning.
+3. Do not remove or add entirely new ideas.
+4. Ensure the tone remains academic and formal.
+5. Do not change the essay type (if it’s argumentative, informative, etc., keep it so).
+6. Fix grammar, punctuation, and spelling errors.
+7. Improve paragraph transitions and coherence.
+8. Make the writing more engaging and clear.
 
-Return ONLY the rewritten essay without any explanations or commentary.`;
+Return ONLY the rewritten essay, with the original title unchanged, and without any explanations or commentary.`;
 
     const userPrompt = instructions 
       ? `Please rewrite the following essay with these specific instructions: ${instructions}\n\nOriginal essay:\n${originalEssay}`

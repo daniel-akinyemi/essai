@@ -66,11 +66,17 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Pass writing style to the rewrite function
-      result = await openRouterClient.rewriteEssay(originalEssay, instructions, mistralModel, userWritingStyle);
+      const rewrittenEssay = await openRouterClient.rewriteEssay(originalEssay, instructions, mistralModel, userWritingStyle);
+      // Get before-rewrite suggestions
+      const suggestions = await openRouterClient.getSuggestions(originalEssay, mistralModel);
+      // Get after-rewrite improvements
+      const improvements = await openRouterClient.compareEssaysForImprovements(originalEssay, rewrittenEssay, mistralModel);
       return NextResponse.json({ 
-        rewrittenEssay: result,
+        rewrittenEssay,
         originalEssay,
         instructions: instructions || null,
+        suggestions, // before rewrite
+        improvements, // after rewrite
         timestamp: new Date().toISOString(),
         success: true 
       });

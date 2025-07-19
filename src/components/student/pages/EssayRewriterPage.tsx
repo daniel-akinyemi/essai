@@ -12,6 +12,8 @@ interface RewriteResult {
   instructions?: string;
   timestamp: string;
   success: boolean;
+  suggestions?: string[];
+  improvements?: string[];
 }
 
 interface Suggestions {
@@ -24,6 +26,7 @@ export default function EssayRewriterPage() {
   const [instructions, setInstructions] = useState('');
   const [rewriteResult, setRewriteResult] = useState<RewriteResult | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [improvements, setImprovements] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [error, setError] = useState('');
@@ -143,8 +146,10 @@ export default function EssayRewriterPage() {
         throw new Error(errorData.error || 'Failed to rewrite essay');
       }
 
-      const result: RewriteResult = await response.json();
+      const result = await response.json();
       setRewriteResult(result);
+      setSuggestions([]); // Do not show tips immediately after rewrite
+      setImprovements([]); // Do not show improvements immediately after rewrite
       setActiveTab('compare');
       
       // Automatically save to history
@@ -188,24 +193,47 @@ export default function EssayRewriterPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/rewriteEssay', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          originalEssay,
-          requestType: 'suggestions'
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to get suggestions');
+      // If a rewrite exists, fetch both suggestions and improvements
+      if (rewriteResult && rewriteResult.rewrittenEssay) {
+        const response = await fetch('/api/rewriteEssay', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            originalEssay,
+            instructions: instructions.trim() || undefined,
+            requestType: 'rewrite',
+            writingStyle: userSettings.writingStyle && userSettings.writingStyle !== 'none' ? userSettings.writingStyle : 'academic'
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get suggestions');
+        }
+        const result = await response.json();
+        setSuggestions(result.suggestions || []);
+        setImprovements(result.improvements || []);
+      } else {
+        // No rewrite yet, just get suggestions for the original
+        const response = await fetch('/api/rewriteEssay', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            originalEssay,
+            requestType: 'suggestions'
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get suggestions');
+        }
+        const result = await response.json();
+        setSuggestions(result.suggestions || []);
+        setImprovements([]);
       }
-
-      const result: Suggestions = await response.json();
-      setSuggestions(result.suggestions);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while getting suggestions');
     } finally {
@@ -238,6 +266,7 @@ export default function EssayRewriterPage() {
     setInstructions('');
     setRewriteResult(null);
     setSuggestions([]);
+    setImprovements([]);
     setError('');
     setActiveTab('rewrite');
   };
@@ -499,16 +528,15 @@ export default function EssayRewriterPage() {
 
           {/* Sidebar */}
           <div className="space-y-8">
-            {/* Suggestions */}
+            {/* Before Rewrite Suggestions (show only if present) */}
             {suggestions.length > 0 && (
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
                 <div className="flex items-center space-x-3 mb-6">
                   <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">
                     <Lightbulb className="h-6 w-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">Improvement Tips</h3>
+                  <h3 className="text-xl font-bold text-gray-900">Here’s what’s wrong with your essay.</h3>
                 </div>
-                
                 <div className="space-y-4">
                   {suggestions.map((suggestion, index) => (
                     <div key={index} className="flex items-start space-x-3 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
@@ -516,6 +544,27 @@ export default function EssayRewriterPage() {
                         <span className="text-white text-xs font-bold">{index + 1}</span>
                       </div>
                       <span className="text-gray-700 leading-relaxed">{suggestion}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* After Rewrite Improvements (show only if present) */}
+            {improvements.length > 0 && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
+                    <CheckCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Here’s what we improved for you.</h3>
+                </div>
+                <div className="space-y-4">
+                  {improvements.map((improvement, index) => (
+                    <div key={index} className="flex items-start space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                      <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-white text-xs font-bold">{index + 1}</span>
+                      </div>
+                      <span className="text-gray-700 leading-relaxed">{improvement}</span>
                     </div>
                   ))}
                 </div>

@@ -191,6 +191,47 @@ Example format: ["Improve thesis statement clarity", "Add more supporting eviden
       ];
     }
   }
+
+  async compareEssaysForImprovements(originalEssay: string, rewrittenEssay: string, model?: string): Promise<string[]> {
+    const systemPrompt = `You are an expert academic writing assistant. Compare the following two essays. The first is the original, the second is the rewritten version. List 3-5 specific improvements made in the rewrite (e.g., improved grammar, added transitions, varied sentence structure, more formal tone, etc.). Do NOT mention the title in your list of improvements. The title must remain unchanged. Only list improvements to the body. Return ONLY a JSON array of strings.`;
+
+    const userPrompt = `Original Essay:\n${originalEssay}\n\nRewritten Essay:\n${rewrittenEssay}`;
+
+    const messages: OpenRouterMessage[] = [
+      {
+        role: 'system',
+        content: systemPrompt
+      },
+      {
+        role: 'user',
+        content: userPrompt
+      }
+    ];
+
+    const response = await this.chatCompletion(messages, model);
+
+    // Try to extract JSON array from response
+    const match = response.match(/\[[\s\S]*?\]/);
+    let improvements: string[] = [];
+    if (match) {
+      try {
+        improvements = JSON.parse(match[0]);
+      } catch (e) {
+        console.error('Failed to parse LLM improvements JSON:', e, match[0]);
+      }
+    }
+    // Fallback: extract lines that look like improvements
+    if (!improvements.length) {
+      const lines = response.split(/\r?\n/);
+      improvements = lines
+        .filter(line => /^\s*(\d+\.|-)/.test(line))
+        .map(line => line.replace(/^\s*(\d+\.|-)/, '').trim())
+        .filter(Boolean);
+    }
+    // Filter out any improvement that mentions the title
+    improvements = improvements.filter(imp => !/title/i.test(imp));
+    return improvements;
+  }
 }
 
 export const openRouterClient = new OpenRouterClient();

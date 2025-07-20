@@ -26,6 +26,7 @@ export default function ParagraphAnalyzerPage() {
   const [autoFix, setAutoFix] = useState(false);
   const [fixedEssay, setFixedEssay] = useState<string>('');
   const [autoSaveMessage, setAutoSaveMessage] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const { data: session } = useSession();
 
@@ -166,6 +167,16 @@ export default function ParagraphAnalyzerPage() {
         return <AlertCircle className="h-5 w-5 text-red-600" />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
+  // Add copy handler for fixed essay
+  const handleCopyFixedEssay = () => {
+    if (fixedEssay) {
+      navigator.clipboard.writeText(fixedEssay).then(() => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      });
     }
   };
 
@@ -391,11 +402,23 @@ export default function ParagraphAnalyzerPage() {
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">Fixed Essay</h3>
                   </div>
-                  
                   <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
                     {fixedEssay.split(/\n\s*\n/).map((para, idx) => (
                       <p key={idx} className="mb-4 text-gray-700 leading-relaxed">{para.trim()}</p>
                     ))}
+                  </div>
+                  <div className="mt-4 flex items-center justify-end">
+                    <button
+                      onClick={handleCopyFixedEssay}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold shadow hover:from-green-600 hover:to-emerald-600 transition"
+                    >
+                      {copySuccess ? (
+                        <CheckCircle className="h-5 w-5 text-white" />
+                      ) : (
+                        <FileText className="h-5 w-5 text-white" />
+                      )}
+                      {copySuccess ? 'Copied!' : 'Copy Essay'}
+                    </button>
                   </div>
                 </div>
               )}

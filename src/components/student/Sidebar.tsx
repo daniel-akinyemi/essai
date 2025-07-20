@@ -86,17 +86,16 @@ export default function Sidebar({ isOpen, onClose, activePage, onPageChange }: S
   useEffect(() => {
     const fetchSettings = async () => {
       if (!session?.user || !(session.user as any).id) return;
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('email_notifications, push_notifications, theme, language, profile_picture_url')
-        .eq('user_id', (session.user as any).id)
-        .single();
-      if (!error && data) {
-        // setEmailNotif(data.email_notifications); // Removed
-        // setPushNotif(data.push_notifications); // Removed
-        // setLanguage(data.language || ""); // Removed
-        // setProfilePicUrl(data.profile_picture_url || ""); // Removed
+      const res = await fetch('/api/user-settings', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (res.status === 401) {
+        window.location.href = '/auth/signin';
+        return;
       }
+      const data = await res.json();
+      // Use data as needed
     };
     fetchSettings();
     // eslint-disable-next-line

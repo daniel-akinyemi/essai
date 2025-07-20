@@ -331,7 +331,7 @@ export default function EssayHistoryPage() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => router.push(`/dashboard/student/essay-history/feedback/${essay.id}`)} 
+                            onClick={() => router.push(`/dashboard/essay-history/feedback/${essay.id}`)} 
                             className="hover:bg-indigo-100 border-indigo-200 text-indigo-700 rounded-lg px-3 py-2 text-sm font-semibold"
                           >
                             Feedback
@@ -339,7 +339,7 @@ export default function EssayHistoryPage() {
                           <Button 
                             variant="secondary" 
                             size="sm" 
-                            onClick={() => router.push(`/dashboard/student/essay-history/rewrite?id=${essay.id}`)} 
+                            onClick={() => router.push(`/dashboard/essay-history/rewrite/${essay.id}`)} 
                             className="hover:bg-pink-100 bg-pink-50 text-pink-700 rounded-lg px-3 py-2 text-sm font-semibold"
                           >
                             Rewrite

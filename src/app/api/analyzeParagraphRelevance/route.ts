@@ -59,7 +59,7 @@ Return your analysis and the fixed essay in the following JSON format:
   "fixedEssay": "Essay text with each paragraph separated by a blank line, using natural transitions."
 }
 
-IMPORTANT:
+IMPORTANT: 
 - Return ONLY the JSON object, no additional text
 - Ensure all text fields are properly escaped
 - Do not include any control characters or special formatting
@@ -291,7 +291,7 @@ ${autoFix ? `When providing Auto-Fix:
       }
       if (typeof analysis.suggestion !== 'string') analysis.suggestion = undefined;
       if (typeof analysis.improvedParagraph !== 'string' && analysis.improvedParagraph !== null) analysis.improvedParagraph = null;
-    }
+  }
 
   // Format the fixed essay if it exists
   if (analysisResult.fixedEssay) {

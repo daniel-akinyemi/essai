@@ -10,12 +10,13 @@ export default function ThemeLoader() {
 
   useEffect(() => {
     const loadTheme = async () => {
-      if (!session?.user?.id) return;
-      const { data } = await supabase
-        .from("user_settings")
-        .select("theme")
-        .eq("user_id", session.user.id)
-        .single();
+      if (!session?.user) return;
+      const res = await fetch('/api/user-settings', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
       if (data?.theme) {
         document.body.classList.remove("light", "dark");
         if (data.theme === "dark" || data.theme === "light") {
@@ -24,7 +25,7 @@ export default function ThemeLoader() {
       }
     };
     loadTheme();
-  }, [session?.user?.id, supabase]);
+  }, [session?.user]);
 
   return null;
 } 

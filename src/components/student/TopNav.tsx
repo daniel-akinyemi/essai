@@ -59,14 +59,19 @@ export default function TopNav({ onMenuClick, user, onSignOut }: TopNavProps) {
 
   useEffect(() => {
     if (!user?.id) return;
-    const supabase = createClientComponentClient();
-    supabase
-      .from('user_settings')
-      .select('profile_picture_url')
-      .eq('user_id', user.id)
-      .single()
-      .then(({ data }) => {
-        if (data?.profile_picture_url) setProfilePicUrl(data.profile_picture_url);
+    fetch('/api/user-settings', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => {
+        if (res.status === 401) {
+          window.location.href = '/auth/signin';
+          return;
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.profilePictureUrl) setProfilePicUrl(data.profilePictureUrl);
       });
   }, [user?.id]);
 
@@ -99,25 +104,30 @@ export default function TopNav({ onMenuClick, user, onSignOut }: TopNavProps) {
   useEffect(() => {
     if (!showSettings || !user?.id) return;
     setSettingsLoading(true);
-    const supabase = createClientComponentClient();
-    supabase
-      .from('user_settings')
-      .select('email_notifications, push_notifications, theme, language, profile_picture_url, writing_style, essay_length, auto_save_frequency, data_sharing, analytics_enabled, show_writing_tips, default_essay_type')
-      .eq('user_id', user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (!error && data) {
-          setEmailNotif(data.email_notifications);
-          setPushNotif(data.push_notifications);
+    fetch('/api/user-settings', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => {
+        if (res.status === 401) {
+          window.location.href = '/auth/signin';
+          return;
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data) {
+          setEmailNotif(data.emailNotifications);
+          setPushNotif(data.pushNotifications);
           setLanguage(data.language || "");
-          setProfilePicUrl(data.profile_picture_url || "");
-          setWritingStyle(data.writing_style || 'academic');
-          setEssayLength(data.essay_length || 'medium');
-          setAutoSaveFrequency(data.auto_save_frequency || '30');
-          setDataSharing(data.data_sharing || false);
-          setAnalyticsEnabled(data.analytics_enabled !== false);
-          setShowWritingTips(data.show_writing_tips !== false);
-          setDefaultEssayType(data.default_essay_type || 'argumentative');
+          setProfilePicUrl(data.profilePictureUrl || "");
+          setWritingStyle(data.writingStyle || 'academic');
+          setEssayLength(data.essayLength || 'medium');
+          setAutoSaveFrequency(data.autoSaveFrequency || '30');
+          setDataSharing(data.dataSharing || false);
+          setAnalyticsEnabled(data.analyticsEnabled !== false);
+          setShowWritingTips(data.showWritingTips !== false);
+          setDefaultEssayType(data.defaultEssayType || 'argumentative');
         }
         setSettingsLoading(false);
       });

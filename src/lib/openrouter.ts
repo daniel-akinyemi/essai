@@ -224,9 +224,13 @@ Example format: ["Improve thesis statement clarity", "Add more supporting eviden
     if (!improvements.length) {
       const lines = response.split(/\r?\n/);
       improvements = lines
-        .filter(line => /^\s*(\d+\.|-)/.test(line))
-        .map(line => line.replace(/^\s*(\d+\.|-)/, '').trim())
+        .filter(line => /^\s*(\d+\.|-|\").*/.test(line))
+        .map(line => line.replace(/^\s*(\d+\.|-|\")/, '').trim())
         .filter(Boolean);
+      // If only one improvement and it contains multiple items, split by semicolon or period
+      if (improvements.length === 1 && /[.;•]/.test(improvements[0])) {
+        improvements = improvements[0].split(/[.;•]/).map(s => s.trim()).filter(Boolean);
+      }
     }
     // Filter out any improvement that mentions the title
     improvements = improvements.filter(imp => !/title/i.test(imp));

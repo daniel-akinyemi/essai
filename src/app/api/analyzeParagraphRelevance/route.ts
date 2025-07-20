@@ -217,7 +217,15 @@ export async function POST(request: NextRequest) {
 Essay:
 ${essay}
 
-${autoFix ? 'Please provide both the relevance analysis AND a fixed version of the essay where problematic paragraphs are replaced with improved versions.' : 'Please provide only the relevance analysis.'}`;
+${autoFix ? `Auto-Fix Rules:
+- Identify only the problematic paragraphs (those marked "Needs Improvement" or "Off-topic").
+- Rewrite these paragraphs to make them relevant, focused, and clearly connected to the essay's main topic.
+- Keep on-topic paragraphs unchanged.
+- Do not repeat or duplicate any paragraphs in the final output.
+- Reorganize the essay cleanly with proper paragraph breaks. Start each new paragraph on a new line.
+
+Output Format:
+Return the full, fixed essay as clean, properly formatted paragraphs. Do not return the same paragraph more than once. Avoid merging unrelated ideas.` : 'Please provide only the relevance analysis.'}`;
 
     const messages: OpenRouterMessage[] = [
       { role: 'system', content: paragraphAnalysisPrompt },

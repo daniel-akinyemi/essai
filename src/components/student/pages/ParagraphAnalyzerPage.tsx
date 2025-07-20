@@ -302,7 +302,7 @@ export default function ParagraphAnalyzerPage() {
                   <h3 className="text-2xl font-bold text-gray-900">Analysis Summary</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="text-center p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border border-emerald-200">
                     <div className="text-3xl font-bold text-emerald-600 mb-2">
                       {paragraphAnalysis.filter(p => p.status === '✅ On-topic').length}
@@ -315,17 +315,11 @@ export default function ParagraphAnalyzerPage() {
                     </div>
                     <div className="text-sm font-semibold text-amber-700">Needs Improvement</div>
                   </div>
-                  <div className="text-center p-6 bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl border border-red-200">
+                  <div className="text-center p-6 bg-gradient-to-br from-red-50 to-slate-50 rounded-2xl border border-red-200">
                     <div className="text-3xl font-bold text-red-600 mb-2">
                       {paragraphAnalysis.filter(p => p.status === '❌ Off-topic').length}
                     </div>
                     <div className="text-sm font-semibold text-red-700">Off-topic</div>
-                  </div>
-                  <div className="text-center p-6 bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl border border-gray-200">
-                    <div className="text-3xl font-bold text-gray-600 mb-2">
-                      {paragraphAnalysis.filter(p => !['✅ On-topic', '🟡 Needs Improvement', '❌ Off-topic', '⚠️ Somewhat Off-topic'].includes(p.status)).length}
-                    </div>
-                    <div className="text-sm font-semibold text-gray-700">Other</div>
                   </div>
                 </div>
               </div>

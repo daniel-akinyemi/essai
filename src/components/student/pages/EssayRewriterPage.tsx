@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Edit3, Copy, Download, CheckCircle, AlertCircle, Loader2, Eye, EyeOff, RefreshCw, Sparkles, Lightbulb, RotateCcw, Settings } from 'lucide-react';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { AutoSaveStatus } from '@/components/ui/auto-save-status';
+import jsPDF from 'jspdf';
 
 interface RewriteResult {
   rewrittenEssay: string;
@@ -261,6 +262,16 @@ export default function EssayRewriterPage() {
     document.body.removeChild(element);
   };
 
+  const handleDownloadPDF = () => {
+    if (!rewriteResult?.rewrittenEssay) return;
+    const doc = new jsPDF();
+    doc.setFont("times", "normal"); // Use Times (Times New Roman style)
+    doc.setFontSize(12);
+    const lines = doc.splitTextToSize(rewriteResult.rewrittenEssay, 180);
+    doc.text(lines, 10, 10);
+    doc.save('rewritten-essay.pdf');
+  };
+
   const resetForm = () => {
     setOriginalEssay('');
     setInstructions('');
@@ -468,22 +479,31 @@ export default function EssayRewriterPage() {
                         <h3 className="text-2xl font-bold text-gray-900">Improved Version</h3>
                       </div>
                       
-                      <div className="flex space-x-3">
-                        <button
-                          onClick={() => copyToClipboard(rewriteResult.rewrittenEssay)}
-                          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
-                        >
-                          <Copy className="h-4 w-4" />
-                          <span>{copySuccess ? 'Copied!' : 'Copy'}</span>
-                        </button>
-                        <button
-                          onClick={() => downloadText(rewriteResult.rewrittenEssay, 'rewritten-essay.txt')}
-                          className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-gray-700 hover:to-gray-800 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
-                        >
-                          <Download className="h-4 w-4" />
-                          <span>Download</span>
-                        </button>
-                      </div>
+                      {rewriteResult && activeTab === 'rewrite' && (
+                        <div className="flex space-x-3">
+                          <button
+                            onClick={() => copyToClipboard(rewriteResult.rewrittenEssay)}
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                          >
+                            <Copy className="h-4 w-4" />
+                            <span>{copySuccess ? 'Copied!' : 'Copy'}</span>
+                          </button>
+                          <button
+                            onClick={() => downloadText(rewriteResult.rewrittenEssay, 'rewritten-essay.txt')}
+                            className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-gray-700 hover:to-gray-800 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span>Download</span>
+                          </button>
+                          <button
+                            onClick={handleDownloadPDF}
+                            className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-emerald-700 hover:to-teal-700 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span>Download PDF</span>
+                          </button>
+                        </div>
+                      )}
                       
                       <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
                         <pre className="whitespace-pre-wrap text-gray-900 font-sans leading-relaxed">

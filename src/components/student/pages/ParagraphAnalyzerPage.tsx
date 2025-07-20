@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { FileText, Search, AlertCircle, Loader2, TrendingUp, Target, CheckCircle, Search as SearchIcon } from 'lucide-react';
+import { FileText, Search, AlertCircle, Loader2, TrendingUp, Target, CheckCircle, Search as SearchIcon, Download } from 'lucide-react';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { AutoSaveStatus } from '@/components/ui/auto-save-status';
+import jsPDF from 'jspdf';
 
 interface ParagraphAnalysis {
   paragraph: number;
@@ -178,6 +179,16 @@ export default function ParagraphAnalyzerPage() {
         setTimeout(() => setCopySuccess(false), 2000);
       });
     }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!fixedEssay) return;
+    const doc = new jsPDF();
+    doc.setFont("times", "normal"); // Use Times (Times New Roman style)
+    doc.setFontSize(12);
+    const lines = doc.splitTextToSize(fixedEssay, 180);
+    doc.text(lines, 10, 10);
+    doc.save('fixed-essay.pdf');
   };
 
   return (
@@ -420,6 +431,13 @@ export default function ParagraphAnalyzerPage() {
                       {copySuccess ? 'Copied!' : 'Copy Essay'}
                     </button>
                   </div>
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-emerald-700 hover:to-teal-700 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download PDF</span>
+                  </button>
                 </div>
               )}
             </div>

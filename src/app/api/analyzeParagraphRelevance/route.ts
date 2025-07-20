@@ -280,21 +280,18 @@ ${autoFix ? `When providing Auto-Fix:
     }
 
     // Validate each paragraph analysis
-    for (const analysis of analysisResult.relevanceReport) {
-      if (typeof analysis.paragraph !== 'number' ||
-          typeof analysis.originalText !== 'string' ||
-          typeof analysis.relevanceScore !== 'number' ||
-          typeof analysis.feedback !== 'string') {
-        throw new Error('Invalid paragraph analysis structure');
+    for (const [index, analysis] of analysisResult.relevanceReport.entries()) {
+      // Fill missing fields with safe defaults
+      if (typeof analysis.paragraph !== 'number') analysis.paragraph = index + 1;
+      if (typeof analysis.originalText !== 'string') analysis.originalText = '';
+      if (typeof analysis.relevanceScore !== 'number') analysis.relevanceScore = 75;
+      if (typeof analysis.feedback !== 'string') analysis.feedback = 'No feedback provided.';
+      if (typeof analysis.status !== 'string' || !['✅ On-topic', '🟡 Needs Improvement', '❌ Off-topic', '⚠️ Somewhat Off-topic'].includes(analysis.status)) {
+        analysis.status = '🟡 Needs Improvement';
       }
-      
-          // Validate status with more flexible checking
-    const validStatuses = ['✅ On-topic', '🟡 Needs Improvement', '❌ Off-topic', '⚠️ Somewhat Off-topic'];
-    if (!validStatuses.includes(analysis.status)) {
-      // If status is invalid, set a default
-      analysis.status = '🟡 Needs Improvement';
+      if (typeof analysis.suggestion !== 'string') analysis.suggestion = undefined;
+      if (typeof analysis.improvedParagraph !== 'string' && analysis.improvedParagraph !== null) analysis.improvedParagraph = null;
     }
-  }
 
   // Format the fixed essay if it exists
   if (analysisResult.fixedEssay) {

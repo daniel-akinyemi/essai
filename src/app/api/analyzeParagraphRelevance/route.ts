@@ -23,48 +23,48 @@ interface ParagraphRelevanceResponse {
   fixedEssay?: string;
 }
 
-const paragraphAnalysisPrompt = `You are an essay relevance checker.
+const paragraphAnalysisPrompt = `You are a paragraph analysis and improvement assistant. Your tasks:
+1️⃣ Analyze each paragraph for relevance to the essay topic.
+2️⃣ Identify if it is on-topic, off-topic, or needs improvement.
+3️⃣ Provide a clear score (out of 100) and explain: is the issue Clarity, Relevance, Coherence, or Grammar?
+4️⃣ When fixing the essay:
+   - Clearly separate each paragraph with a blank line.
+   - Do not merge two ideas into one block.
+   - Use natural transitions like: Furthermore, Moreover, In addition, Consequently.
+5️⃣ Final output: A clean, readable essay with clear paragraph breaks.
 
-Your task is to analyze each paragraph of a given essay and determine how well it supports the main topic or thesis. Use **flexible relevance checking**.
+Formatting Example for Final Output:
+[Paragraph 1]
 
-🔍 Instructions:
-- Evaluate how well each paragraph supports the main argument or topic.
-- Accept both localized (e.g., Nigerian examples) and global/international examples (e.g., Coursera, Google Classroom) **as long as they support the thesis**.
-- Do NOT penalize a paragraph for using non-local examples if they are meaningful and logically contribute to the essay's main idea.
-- Flag a paragraph **only if it is clearly unrelated, redundant, or weakly connected** to the essay's argument.
+(blank line)
 
-🎨 Scoring Guide:
-✅ On-topic – Directly or indirectly supports the thesis (score 80-100).
-⚠️ Somewhat Off-topic – Mostly relevant but needs clearer connection to the topic (score 50-79).
-❌ Off-topic – Irrelevant or distracting content (score 0-49).
+[Paragraph 2]
 
-Do not be overly strict. Be helpful and suggest improvements when relevance is low.
+(blank line)
 
-OUTPUT FORMAT:
-Return ONLY a valid JSON object with this structure. Do not include any text before or after the JSON:
+... etc.
+
+Return your analysis and the fixed essay in the following JSON format:
 {
   "relevanceReport": [
     {
       "paragraph": 1,
       "originalText": "The original paragraph text here...",
       "relevanceScore": 85,
-      "status": "✅ On-topic",
-      "feedback": "Clearly supports the main idea with good examples.",
-      "suggestion": null,
-      "improvedParagraph": null
+      "status": "✅ On-topic" | "🟡 Needs Improvement" | "❌ Off-topic",
+      "issue": "Clarity" | "Relevance" | "Coherence" | "Grammar",
+      "explanation": "Short explanation."
     }
-  ]
+  ],
+  "fixedEssay": "Essay text with each paragraph separated by a blank line, using natural transitions."
 }
 
-If autoFix is true, also include a "fixedEssay" field with the full essay where problematic paragraphs are replaced with improved versions. IMPORTANT: The fixedEssay MUST be broken into clear, logical academic paragraphs, with each paragraph separated by two line breaks (\n\n). Do NOT return the entire essay as a single block of text. Each paragraph should be a well-structured academic paragraph.
-
-IMPORTANT: 
+IMPORTANT:
 - Return ONLY the JSON object, no additional text
 - Ensure all text fields are properly escaped
 - Do not include any control characters or special formatting
 - Make sure the JSON is valid and parseable
-- Use flexible relevance checking - don't be overly strict
-- For fixedEssay: Use \n\n to separate paragraphs, not single \n, and ensure each paragraph is a logical academic paragraph.`;
+- For fixedEssay: Use \n\n to separate paragraphs, not single \n, and ensure each paragraph is a logical academic paragraph with transitions as needed.`;
 
 function repairJsonString(jsonString: string): string {
   // First, normalize line endings and remove control characters
@@ -218,10 +218,10 @@ Essay:
 ${essay}
 
 ${autoFix ? `When providing Auto-Fix:
-1️⃣ Each improved paragraph must end with a clear blank line for readability. Do not merge paragraphs together.
-2️⃣ Use transition words ("Furthermore,", "In addition,", "Moreover,") to improve flow between ideas.
-3️⃣ For scoring, explain clearly why the paragraph lost points (mention clarity, relevance, grammar, or coherence). For example: 'Score 60/100 because this paragraph shifts focus away from healthy eating and adds confusion. It requires rephrasing to link clearly back to the main topic.'
-4️⃣ Output the fixed essay with proper paragraph breaks and clear formatting, as in the provided example.
+- Each improved paragraph must end with a clear blank line for readability. Do not merge paragraphs together.
+- Use transition words ("Furthermore,", "In addition,", "Moreover,", "Consequently,") to improve flow between ideas.
+- For scoring, explain clearly why the paragraph lost points (mention clarity, relevance, grammar, or coherence). For example: 'Score 60/100 because this paragraph shifts focus away from healthy eating and adds confusion. It requires rephrasing to link clearly back to the main topic.'
+- Output the fixed essay with proper paragraph breaks and clear formatting, as in the provided example.
 - Do not include extra commentary outside this format.
 ` : ''}`;
 

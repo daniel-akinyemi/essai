@@ -5,7 +5,11 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import jsPDF from 'jspdf';
 
-export default function RewritePage({ params }) {
+interface RewritePageProps {
+  params: { essayId: string };
+}
+
+export default function RewritePage({ params }: RewritePageProps) {
   const router = useRouter();
   const essayId = params.essayId;
   const [essay, setEssay] = useState<any>(null);
@@ -33,9 +37,14 @@ export default function RewritePage({ params }) {
     if (!essay?.content) return;
     const doc = new jsPDF();
     doc.setFont('times', 'normal');
-    doc.setFontSize(12);
+    doc.setFontSize(16); // Title font size
+    const title = essay.topic || 'Essay Title';
+    const titleLines = doc.splitTextToSize(title, 180);
+    doc.text(titleLines, 10, 20);
+    doc.setFontSize(12); // Content font size
+    const contentY = 20 + titleLines.length * 10;
     const lines = doc.splitTextToSize(essay.content, 180);
-    doc.text(lines, 10, 10);
+    doc.text(lines, 10, contentY);
     doc.save('rewritten-essay.pdf');
   };
 

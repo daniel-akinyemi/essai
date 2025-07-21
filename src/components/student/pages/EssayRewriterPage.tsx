@@ -68,11 +68,12 @@ export default function EssayRewriterPage() {
     }
   };
 
+  const autoSaveEnabled = userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none';
   const { isSaving, saveStatus, saveNow } = useAutoSave({
     content: originalEssay,
-    autoSaveFrequency: userSettings?.autoSaveFrequency || '30',
+    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : undefined,
     onSave: autoSaveHandler,
-    enabled: !!session?.user && originalEssay.length > 50
+    enabled: !!session?.user && originalEssay.length > 50 && autoSaveEnabled
   });
 
   // Load user settings on component mount
@@ -302,7 +303,7 @@ export default function EssayRewriterPage() {
         </div>
 
         {/* User Preferences Indicator */}
-        {settingsLoaded && (
+        {settingsLoaded && userSettings.writingStyle !== 'none' && (
           <div className="mb-8 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -357,7 +358,7 @@ export default function EssayRewriterPage() {
                     <span>{charCount} characters • {wordCount} words</span>
                     <div className="flex items-center space-x-4">
                       {/* Auto-save Status */}
-                      {session?.user && originalEssay.length > 50 && (
+                      {session?.user && originalEssay.length > 50 && autoSaveEnabled && (
                         <AutoSaveStatus 
                           status={saveStatus} 
                           frequency={userSettings.autoSaveFrequency}

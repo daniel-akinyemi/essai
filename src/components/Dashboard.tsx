@@ -244,6 +244,17 @@ const App = () => {
             </button>
             {errorEssay && <div className="text-red-600 text-sm mt-2">{errorEssay}</div>}
             {generatedEssay && (
+              <div className="flex justify-end mb-2">
+                <button
+                  onClick={() => navigator.clipboard.writeText(generatedEssay)}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Copy</span>
+                </button>
+              </div>
+            )}
+            {generatedEssay && (
               <div className="mt-6 max-h-64 overflow-y-auto bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-800 whitespace-pre-line">
                 {generatedEssay}
               </div>

@@ -90,11 +90,12 @@ export default function ParagraphAnalyzerPage() {
     }
   };
 
+  const autoSaveEnabled = userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none';
   const { isSaving, saveStatus, saveNow } = useAutoSave({
-    content: essay,
-    autoSaveFrequency: userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none' ? userSettings.autoSaveFrequency : '30', // Use user's preferred frequency or default
+    content: fixedEssay,
+    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : undefined,
     onSave: autoSaveHandler,
-    enabled: !!session?.user && essay.length > 50
+    enabled: !!session?.user && fixedEssay.length > 50 && autoSaveEnabled
   });
 
   const handleParagraphAnalysis = async () => {

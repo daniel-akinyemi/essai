@@ -84,11 +84,12 @@ export default function EssayGeneratorPage() {
     }
   };
 
+  const autoSaveEnabled = userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none';
   const { isSaving, saveStatus, saveNow } = useAutoSave({
     content: essay,
-    autoSaveFrequency: userSettings.autoSaveFrequency,
+    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : undefined,
     onSave: autoSaveHandler,
-    enabled: !!session?.user && essay.length > 50
+    enabled: !!session?.user && essay.length > 50 && autoSaveEnabled
   });
 
   // Load user settings on component mount
@@ -247,7 +248,7 @@ export default function EssayGeneratorPage() {
         </div>
 
         {/* User Preferences Indicator */}
-        {settingsLoaded && (
+        {settingsLoaded && userSettings.writingStyle !== 'none' && userSettings.essayLength !== 'none' && (
           <div className="mb-8 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -389,30 +390,30 @@ export default function EssayGeneratorPage() {
                       />
                     )}
                     <button
-                        onClick={() => copyToClipboard(essay)}
+                      onClick={() => copyToClipboard(essay)}
                       className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
-                      >
-                        {copySuccess ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            <span>Copied!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-4 w-4" />
-                            <span>Copy</span>
-                          </>
-                        )}
-                                  </button>
-                                <button
-                                  onClick={handleDownloadPDF}
-                                  className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-gray-700 hover:to-gray-800 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
-                                >
-                                  <Download className="h-4 w-4" />
-                                  <span>Download PDF</span>
-                                </button>
-                              </div>
-                            </div>
+                    >
+                      {copySuccess ? (
+                        <>
+                          <Check className="h-4 w-4" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleDownloadPDF}
+                      className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-gray-700 hover:to-gray-800 flex items-center space-x-2 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Download PDF</span>
+                    </button>
+                  </div>
+                </div>
                 
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
                   <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">{essay}</div>

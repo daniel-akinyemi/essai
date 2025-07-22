@@ -11,7 +11,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // @ts-expect-error: userSettings may not be recognized by Prisma types immediately after schema change
     const userSettings = await (prisma as any).userSettings.findUnique({
       where: {
         userId: (session.user as any).id,
@@ -45,9 +44,7 @@ export async function POST(request: NextRequest) {
         userId,
       },
       update: {
-        profilePictureUrl: body.profilePictureUrl,
         emailNotifications: body.emailNotifications,
-        pushNotifications: body.pushNotifications,
         showWritingTips: body.showWritingTips,
         theme: body.theme,
         language: body.language,
@@ -61,9 +58,7 @@ export async function POST(request: NextRequest) {
       },
       create: {
         userId,
-        profilePictureUrl: body.profilePictureUrl,
         emailNotifications: body.emailNotifications,
-        pushNotifications: body.pushNotifications,
         showWritingTips: body.showWritingTips,
         theme: body.theme,
         language: body.language,

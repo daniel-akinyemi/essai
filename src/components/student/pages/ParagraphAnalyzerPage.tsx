@@ -93,9 +93,9 @@ export default function ParagraphAnalyzerPage() {
   const autoSaveEnabled = userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none';
   const { isSaving, saveStatus, saveNow } = useAutoSave({
     content: fixedEssay,
-    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : undefined,
+    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : '',
     onSave: autoSaveHandler,
-    enabled: !!session?.user && fixedEssay.length > 50 && autoSaveEnabled
+    enabled: !!session?.user && fixedEssay.length > 50 && Boolean(autoSaveEnabled)
   });
 
   const handleParagraphAnalysis = async () => {

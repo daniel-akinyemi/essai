@@ -87,9 +87,9 @@ export default function EssayGeneratorPage() {
   const autoSaveEnabled = userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none';
   const { isSaving, saveStatus, saveNow } = useAutoSave({
     content: essay,
-    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : undefined,
+    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : '',
     onSave: autoSaveHandler,
-    enabled: !!session?.user && essay.length > 50 && autoSaveEnabled
+    enabled: !!session?.user && essay.length > 50 && Boolean(autoSaveEnabled)
   });
 
   // Load user settings on component mount

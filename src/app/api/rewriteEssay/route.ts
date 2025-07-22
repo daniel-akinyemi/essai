@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Pass writing style to the rewrite function
-      const rewrittenEssay = await openRouterClient.rewriteEssay(originalEssay, instructions, mistralModel, userWritingStyle);
+      const rewrittenEssay = await openRouterClient.rewriteEssay(originalEssay, instructions, mistralModel);
       // Get before-rewrite suggestions
       const suggestions = await openRouterClient.getSuggestions(originalEssay, mistralModel);
       // Get after-rewrite improvements

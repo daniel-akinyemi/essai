@@ -1,11 +1,18 @@
-"use client";
-
+import { Suspense } from "react";
 import AuthForm from "@/components/AuthForm";
 import Link from "next/link";
 import { Sparkles, BookOpen, Target, TrendingUp } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInPageContent />
+    </Suspense>
+  );
+}
+
+function SignInPageContent() {
   const searchParams = useSearchParams();
   const signupSuccess = searchParams.get("signup") === "success";
   return (
@@ -110,18 +117,16 @@ export default function SignInPage() {
             </div>
           </div>
           {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-gray-500">
-              By signing in, you agree to our{" "}
-              <Link href="/terms" className="text-blue-600 hover:text-blue-500">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
-                Privacy Policy
-              </Link>
-            </p>
-          </div>
+          <p className="text-sm text-gray-500">
+            By signing in, you agree to our{" "}
+            <Link href="/terms" className="text-blue-600 hover:text-blue-500">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
+              Privacy Policy
+            </Link>
+          </p>
         </div>
       </div>
     </div>

@@ -71,9 +71,9 @@ export default function EssayRewriterPage() {
   const autoSaveEnabled = userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none';
   const { isSaving, saveStatus, saveNow } = useAutoSave({
     content: originalEssay,
-    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : undefined,
+    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : '',
     onSave: autoSaveHandler,
-    enabled: !!session?.user && originalEssay.length > 50 && autoSaveEnabled
+    enabled: !!session?.user && originalEssay.length > 50 && Boolean(autoSaveEnabled)
   });
 
   // Load user settings on component mount

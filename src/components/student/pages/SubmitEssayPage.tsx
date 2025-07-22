@@ -92,9 +92,9 @@ export default function SubmitEssayPage() {
   const autoSaveEnabled = userSettings.autoSaveFrequency && userSettings.autoSaveFrequency !== 'none';
   const { isSaving, saveStatus, saveNow } = useAutoSave({
     content,
-    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : undefined,
+    autoSaveFrequency: autoSaveEnabled ? userSettings.autoSaveFrequency : '',
     onSave: autoSaveHandler,
-    enabled: !!session?.user && content.length > 50 && autoSaveEnabled
+    enabled: !!session?.user && content.length > 50 && Boolean(autoSaveEnabled)
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

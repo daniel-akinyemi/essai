@@ -99,7 +99,7 @@ export default function Sidebar({ isOpen, onClose, activePage, onPageChange }: S
     };
     fetchSettings();
     // eslint-disable-next-line
-  }, [session?.user?.id]);
+  }, [session?.user]);
 
   // Save settings
   // const handleSaveSettings = async () => { // Removed

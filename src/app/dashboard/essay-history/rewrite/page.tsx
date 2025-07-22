@@ -1,10 +1,19 @@
 "use client";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function RewritePage() {
+  return (
+    <Suspense>
+      <RewritePageContent />
+    </Suspense>
+  );
+}
+
+function RewritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const essayId = searchParams.get("id");

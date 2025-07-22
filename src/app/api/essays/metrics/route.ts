@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     if (!session || !session.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const userId = session.user.id;
+    const userId = (session.user as any).id;
 
     // Fetch all essays for the user (could be optimized for large datasets)
     const essays = await prisma.essay.findMany({

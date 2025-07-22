@@ -12,6 +12,7 @@
     "@auth/prisma-adapter": "^2.10.0",
     "@emailjs/browser": "^4.4.1",
     "@heroicons/react": "^2.1.1",
+    "@paystack/inline-js": "^2.22.7",
     "@prisma/client": "^6.12.0",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-separator": "^1.1.7",

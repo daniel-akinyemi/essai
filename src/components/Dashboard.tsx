@@ -11,15 +11,16 @@ import {
 } from 'lucide-react';
 import Link from "next/link";
 import { signOut } from 'next-auth/react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from 'recharts';
+import dynamic from 'next/dynamic';
+
+// Dynamically import recharts components to avoid SSR issues
+const LineChart = dynamic(() => import('recharts').then((mod) => mod.LineChart), { ssr: false });
+const Line = dynamic(() => import('recharts').then((mod) => mod.Line), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then((mod) => mod.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then((mod) => mod.YAxis), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then((mod) => mod.Tooltip), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then((mod) => mod.ResponsiveContainer), { ssr: false });
+const CartesianGrid = dynamic(() => import('recharts').then((mod) => mod.CartesianGrid), { ssr: false });
 
 // Add types for activity and trends
 interface ActivityItem {
@@ -44,10 +45,17 @@ function formatRelativeDate(dateString: string) {
   return date.toLocaleDateString();
 }
 
+// Define types for metrics
+interface Metrics {
+  essaysGenerated: number;
+  wordsWritten: number;
+  averageScore: number;
+}
+
 // Main App component for Dashboard Overview and Essay Generation
 const App = () => {
   // --- Dashboard State ---
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState<Metrics>({
     essaysGenerated: 0,
     wordsWritten: 0,
     averageScore: 0,
@@ -189,36 +197,36 @@ const App = () => {
               </div>
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex flex-col">
-                <label className="text-sm font-medium mb-1">Essay Topic</label>
-                <input
-                  className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                  type="text"
-                  value={topic}
-                  onChange={e => setTopic(e.target.value)}
-                  placeholder="Enter your essay topic"
-                />
-      </div>
-      <div className="flex flex-col">
-        <label className="text-sm font-medium mb-1">Desired Length (words)</label>
-        <input
-          className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-          type="number"
-          min={50}
-          max={5000}
-          step={50}
-          value={length}
-          onChange={e => setLength(Number(e.target.value))}
-          placeholder="e.g. 500"
-          list="length-options"
-        />
-        <datalist id="length-options">
-          <option value="250" />
-          <option value="500" />
-          <option value="750" />
-          <option value="1000" />
-        </datalist>
-      </div>
+  <div className="flex flex-col">
+    <label className="text-sm font-medium mb-1">Essay Topic</label>
+    <input
+      className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+      type="text"
+      value={topic}
+      onChange={e => setTopic(e.target.value)}
+      placeholder="Enter your essay topic"
+    />
+  </div>
+  <div className="flex flex-col">
+    <label className="text-sm font-medium mb-1">Desired Length (words)</label>
+    <input
+      className="rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+      type="number"
+      min={50}
+      max={5000}
+      step={50}
+      value={length}
+      onChange={e => setLength(Number(e.target.value))}
+      placeholder="e.g. 500"
+      list="length-options"
+    />
+    <datalist id="length-options">
+      <option value="250" />
+      <option value="500" />
+      <option value="750" />
+      <option value="1000" />
+    </datalist>
+  </div>
               <div className="flex flex-col">
                 <label className="text-sm font-medium mb-1">Tone</label>
                 <select
@@ -345,16 +353,23 @@ const App = () => {
               <Activity className="h-5 w-5 text-green-600" /> Generation Trends
             </h3>
             <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trends} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={3} dot={{ r: 5 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+  <ResponsiveContainer width="100%" height="100%">
+    <LineChart data={trends} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="week" />
+      <YAxis allowDecimals={false} />
+      <Tooltip />
+      <Line 
+        type="monotone" 
+        dataKey="count" 
+        stroke="#6366f1" 
+        strokeWidth={3} 
+        dot={{ r: 5 }} 
+        name="Essays"
+      />
+    </LineChart>
+  </ResponsiveContainer>
+</div>
           </div>
         </aside>
         </main>

@@ -36,13 +36,16 @@
   "devDependencies": {
     "@auth/prisma-adapter": "^2.10.0",
     "@emailjs/browser": "^4.4.1",
-    "@tailwindcss/nesting": "0.0.0-insiders.565cd3e",
+    "@tailwindcss/nesting": "^0.0.0-insiders.565cd3e",
+    "@tailwindcss/postcss": "^4.1.11",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^24.1.0",
-    "autoprefixer": "^10.4.21",
+    "autoprefixer": "^10.4.0",
     "bcryptjs": "^3.0.2",
+    "postcss": "^8.4.0",
     "prisma": "^6.11.1",
-    "tailwindcss": "^4.1.11",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3"
   }
 }

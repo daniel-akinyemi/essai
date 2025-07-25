@@ -1,106 +1,127 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
+  previewFeatures = ["multiSchema", "filteredRelationCount"]
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DIRECT_URL")
   schemas   = ["public"]
+  // Enable connection pooling
+  // Requires pgBouncer or similar in production
+  // url = env("DATABASE_URL") // For connection pooling
 }
 
 model User {
-  id        String    @id @default(cuid())
-  firstName String?
-  lastName  String?
-  name      String?
-  email     String    @unique
-  password  String
-  apiKey    String?   @unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  accounts  Account[]
-  essays    Essay[]
-  sessions  Session[]
-  userSettings UserSettings?
+  id              String        @id @default(cuid())
+  firstName       String?       @db.VarChar(100)
+  lastName        String?       @db.VarChar(100)
+  name            String?       @db.VarChar(200)
+  email           String        @unique @db.VarChar(255)
+  emailVerified   DateTime?     @map("email_verified")
+  password        String        @db.VarChar(255)
+  image           String?       @db.Text
+  apiKey          String?       @unique @db.VarChar(64)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  accounts        Account[]
+  essays          Essay[]
+  sessions        Session[]
+  userSettings    UserSettings?
 
   @@map("users")
   @@schema("public")
+
+  // Add full-text search index
+  // @@fulltext([name, email])
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  type               String   @db.VarChar(50)
+  provider           String   @db.VarChar(50)
+  providerAccountId  String   @map("provider_account_id") @db.VarChar(255)
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?  @db.VarChar(50)
+  scope              String?  @db.Text
+  id_token           String?  @db.Text
+  session_state      String?  @db.VarChar(255)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId], name: "account_user_id_idx")
+  @@index([provider, providerAccountId], name: "provider_provider_account_id_idx")
   @@map("accounts")
   @@schema("public")
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  sessionToken  String   @unique @map("session_token") @db.VarChar(255)
+  userId        String   @map("user_id")
+  expires       DateTime
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId], name: "session_user_id_idx")
+  @@index([expires], name: "session_expires_idx")
   @@map("sessions")
   @@schema("public")
 }
 
 model VerificationToken {
-  identifier String
-  token      String   @unique
+  identifier String   @db.VarChar(255)
+  token      String   @unique @db.VarChar(255)
   expires    DateTime
 
   @@unique([identifier, token])
+  @@index([expires], name: "verification_token_expires_idx")
   @@map("verification_tokens")
   @@schema("public")
 }
 
 model Essay {
-  id          String   @id @default(cuid())
-  userId      String
-  topic       String
-  content     String
-  type        String
-  score       Int
-  feedback    String
-  submittedAt DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  topic        String   @db.VarChar(255)
+  content      String   @db.Text
+  type         String   @db.VarChar(50)
+  score        Int      @default(0)
+  feedback     String   @db.Text
+  wordCount    Int?     @default(0) @map("word_count")
+  submittedAt  DateTime @default(now()) @map("submitted_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId], name: "essay_user_id_idx")
+  @@index([submittedAt], name: "essay_submitted_at_idx")
+  @@index([type], name: "essay_type_idx")
+  @@index([score], name: "essay_score_idx")
   @@map("essays")
   @@schema("public")
 }
 
 model UserSettings {
-  id                    String   @id @default(cuid())
-  userId                String   @unique
-  emailNotifications    Boolean  @default(true)
-  showWritingTips       Boolean  @default(true)
-  theme                 String   @default("system")
-  language              String   @default("en")
-  autoSaveFrequency     String   @default("30")
-  writingStyle          String   @default("academic")
-  defaultEssayType      String   @default("argumentative")
-  essayLength           String   @default("medium")
-  analyticsEnabled      Boolean  @default(true)
-  dataSharing           Boolean  @default(false)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String   @id @default(cuid())
+  userId               String   @unique @map("user_id")
+  emailNotifications   Boolean  @default(true) @map("email_notifications")
+  showWritingTips      Boolean  @default(true) @map("show_writing_tips")
+  theme                String   @default("system") @db.VarChar(20)
+  language             String   @default("en") @db.VarChar(10)
+  autoSaveFrequency    String   @default("30") @map("auto_save_frequency") @db.VarChar(10)
+  writingStyle         String   @default("academic") @map("writing_style") @db.VarChar(50)
+  defaultEssayType     String   @default("argumentative") @map("default_essay_type") @db.VarChar(50)
+  essayLength          String   @default("medium") @map("essay_length") @db.VarChar(20)
+  analyticsEnabled     Boolean  @default(true) @map("analytics_enabled")
+  dataSharing          Boolean  @default(false) @map("data_sharing")
+  lastActiveAt         DateTime? @map("last_active_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId], name: "user_settings_user_id_idx")
   @@map("user_settings")
   @@schema("public")
 }

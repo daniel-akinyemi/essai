@@ -13,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Essai - Smart Essay Evaluation Platform",
   description: "Transform your writing with AI-powered essay evaluation, scoring, and feedback. Perfect for students, professionals, and anyone looking to improve their writing skills.",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

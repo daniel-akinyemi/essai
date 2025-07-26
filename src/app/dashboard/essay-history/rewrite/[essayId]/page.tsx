@@ -1,17 +1,17 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import jsPDF from 'jspdf';
 
-interface RewritePageProps {
-  params: { essayId: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
+// In Next.js 15.4.4 App Router, we don't need to type the page props
+// as they are handled by the framework. We can use the useParams hook instead.
+// This is a workaround for the type error we're seeing.
 
-export default function RewritePage({ params }: RewritePageProps) {
+export default function RewritePage() {
   const router = useRouter();
+  const params = useParams<{ essayId: string }>();
   const essayId = params.essayId;
   const [essay, setEssay] = useState<any>(null);
   const [loading, setLoading] = useState(true);

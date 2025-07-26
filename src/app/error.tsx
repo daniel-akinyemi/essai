@@ -1,9 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
-import * as Sentry from '@sentry/nextjs';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+
+// Temporarily disabled Sentry to isolate build issues
+const captureException = async (error: Error) => {
+  console.log('Error occurred (Sentry disabled):', error.message);
+  // Sentry integration temporarily disabled
+};
 
 export default function Error({
   error,
@@ -14,11 +19,16 @@ export default function Error({
 }) {
   const router = useRouter();
 
+  const [errorReported, setErrorReported] = useState(false);
+
   useEffect(() => {
     // Log the error to Sentry
-    Sentry.captureException(error);
-    console.error('Page error:', error);
-  }, [error]);
+    if (!errorReported) {
+      captureException(error);
+      setErrorReported(true);
+      console.error('Page error:', error);
+    }
+  }, [error, errorReported]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">

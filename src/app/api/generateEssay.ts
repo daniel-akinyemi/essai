@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { openRouterClient } from '@/lib/openrouter';
+import { getOpenRouterClient } from '@/lib/openrouter';
 import type { OpenRouterMessage } from '@/lib/openrouter';
 
 const systemPrompt = `Role & Context:
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
     ];
 
     const mistralModel = 'mistralai/mistral-7b-instruct:free';
+    const openRouterClient = getOpenRouterClient();
     const essay = await openRouterClient.chatCompletion(messages, mistralModel);
 
     // Optionally, extract the detected essay type if needed

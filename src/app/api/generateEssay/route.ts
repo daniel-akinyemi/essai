@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { openRouterClient } from '@/lib/openrouter';
+import { getOpenRouterClient } from '@/lib/openrouter';
 import type { OpenRouterMessage } from '@/lib/openrouter';
 import { checkRelevance } from '@/lib/essayScoring/relevanceChecker';
 import { getServerSession } from "next-auth";
@@ -257,6 +257,7 @@ Please generate an essay in ${userWritingStyle} style with a target length of ${
         { role: 'user', content: userPrompt }
       ];
       const mistralModel = 'mistralai/mistral-7b-instruct:free';
+      const openRouterClient = getOpenRouterClient();
       essay = await openRouterClient.chatCompletion(messages, mistralModel);
     } catch (aiError) {
       console.error('AI essay generation failed:', aiError);

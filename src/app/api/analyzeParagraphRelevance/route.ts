@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { openRouterClient } from '../../../lib/openrouter';
+import { getOpenRouterClient } from '../../../lib/openrouter';
 import type { OpenRouterMessage } from '../../../lib/openrouter';
 
 interface ParagraphRelevanceRequest {
@@ -232,6 +232,7 @@ ${autoFix ? `When providing Auto-Fix:
 
     // Use a reliable model for analysis
     const model = 'mistralai/mistral-7b-instruct:free';
+    const openRouterClient = getOpenRouterClient();
     const response = await openRouterClient.chatCompletion(messages, model);
 
     // Clean the response and extract JSON

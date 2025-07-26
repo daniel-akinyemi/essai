@@ -41,6 +41,10 @@ declare module 'victory-vendor/d3-shape' {
   // Other shape utilities
   export const shapeArea: any;
   export const shapeLine: any;
+  
+  // Default export for d3-shape
+  const d3Shape: any;
+  export default d3Shape;
 }
 
 declare module 'victory-vendor/d3-scale' {
@@ -51,6 +55,10 @@ declare module 'victory-vendor/d3-scale' {
   
   // Other scale utilities
   export const d3Scales: any;
+  
+  // Default export for d3-scale
+  const d3Scale: any;
+  export default d3Scale;
 }
 
 declare module 'recharts' {

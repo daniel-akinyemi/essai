@@ -5,6 +5,15 @@ const nextConfig = {
   // Enable React Strict Mode in production only
   reactStrictMode: process.env.NODE_ENV !== 'development',
   
+  // Environment variables configuration
+  env: {
+    // Make sure these environment variables are available at build time
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL,
+    // Add other environment variables that should be available at build time
+  },
+  
   // ESLint configuration
   eslint: {
     ignoreDuringBuilds: true,

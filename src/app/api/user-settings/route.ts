@@ -47,21 +47,23 @@ export const dynamic = 'force-dynamic'; // No caching at the edge
 // Define the UserSettings type that matches our Prisma schema
 type UserSettings = {
   id?: string;
-  userId?: string;
-  email?: string;
-  emailNotifications?: boolean;
-  showWritingTips?: boolean;
-  theme?: string;
-  language?: string;
-  autoSaveFrequency?: string;
-  writingStyle?: string;
-  defaultEssayType?: string;
-  essayLength?: string;
-  analyticsEnabled?: boolean;
-  dataSharing?: boolean;
+  userId: string;
+  emailNotifications: boolean;
+  showWritingTips: boolean;
+  theme: string;
+  language: string;
+  autoSaveFrequency: string;
+  writingStyle: string;
+  defaultEssayType: string;
+  essayLength: string;
+  analyticsEnabled: boolean;
+  dataSharing: boolean;
   lastActiveAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
+  user?: {
+    email: string;
+  };
 };
 
 // Type for the request body (excludes read-only fields)
@@ -69,25 +71,32 @@ type UserSettingsUpdate = Omit<Partial<UserSettings>, 'id' | 'userId' | 'created
 
 // Base handler without CORS and rate limiting
 async function getHandler(req: NextRequest): Promise<NextResponse> {
+  const startTime = Date.now();
+  
   try {
-    const startTime = Date.now();
-    
     // Get user session
     const session = await getServerSession(authOptions);
-    const userEmail = session?.user?.email;
     
-    if (!userEmail) {
+    if (!session?.user) {
       return unauthorizedResponse('You must be logged in to access user settings');
     }
-
-    // Check cache first
-    const cacheKey = `user-settings:${userEmail}`;
-    const cached = await getCache(cacheKey);
     
-    if (cached) {
+    // Get user ID from session (using type assertion as we know it exists)
+    const userId = (session.user as any).id;
+    
+    if (!userId) {
+      return unauthorizedResponse('User ID not found in session');
+    }
+    
+    // First try to get from cache
+    const cachedData = await getCache(`user-settings:${userId}`);
+    
+    if (cachedData) {
+      console.log(`[CACHE HIT] Found settings for user ${userId} in cache`);
+      
       try {
-        const responseData = JSON.parse(cached);
-        return successResponse(responseData, {
+        const parsedData = JSON.parse(cachedData);
+        return successResponse(parsedData, {
           headers: {
             'X-Cache': 'HIT',
             'X-Response-Time': `${Date.now() - startTime}ms`
@@ -101,39 +110,51 @@ async function getHandler(req: NextRequest): Promise<NextResponse> {
       } catch (e) {
         console.error('Error parsing cached data:', e);
         // If cache is corrupted, continue to fetch from database
-        return await fetchFromDatabase(userEmail, startTime);
+        return await fetchFromDatabase(userId, startTime);
       }
     }
     
-    return await fetchFromDatabase(userEmail, startTime);
+    return await fetchFromDatabase(userId, startTime);
   } catch (error) {
     const errResponse = handleError(error);
     if (errResponse instanceof NextResponse) {
       return errResponse;
     }
-    return NextResponse.json(
-      { success: false, error: 'An error occurred while fetching user settings' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to fetch user settings', 500, {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
 
-async function fetchFromDatabase(email: string, startTime: number): Promise<NextResponse> {
+async function fetchFromDatabase(userId: string, startTime: number): Promise<NextResponse> {
   try {
     // Fetch from database
     const userSettings = await prisma.userSettings.findUnique({
-      where: { email },
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+      },
     });
 
-    // Cache the result
-    if (userSettings) {
-      const cacheKey = `user-settings:${email}`;
-      await setCache(cacheKey, JSON.stringify(userSettings), CACHE_DURATION);
+    if (!userSettings) {
+      console.log(`[CACHE MISS] No settings found for user: ${userId}`);
+      return NextResponse.json(
+        { success: false, error: 'User settings not found' },
+        { status: 404 }
+      );
     }
+
+    // Cache the result
+    const cacheKey = `user-settings:${userId}`;
+    await setCache(cacheKey, JSON.stringify(userSettings), CACHE_DURATION);
     
     const responseTime = Date.now() - startTime;
     
-    return successResponse(userSettings || {}, {
+    return successResponse(userSettings, {
       headers: {
         'X-Cache': 'MISS',
         'X-Response-Time': `${responseTime}ms`
@@ -183,56 +204,134 @@ export const GET = async (req: NextRequest): Promise<NextResponse> => {
 
 // POST handler for creating/updating user settings
 async function postHandler(req: NextRequest): Promise<NextResponse> {
+  const startTime = Date.now();
+  
   try {
-    const startTime = Date.now();
-    
     // Get user session
     const session = await getServerSession(authOptions);
-    const userEmail = session?.user?.email;
     
-    if (!userEmail) {
+    if (!session?.user) {
       return unauthorizedResponse('You must be logged in to update user settings');
     }
     
-    // Parse and validate request body
-    let body: UserSettingsUpdate;
-    try {
-      body = await req.json();
-    } catch (e) {
-      return validationErrorResponse('Invalid JSON body');
-    }
+    // Get user ID from session
+    const userId = (session.user as any).id;
     
-    // Validate required fields
-    if (!body || Object.keys(body).length === 0) {
-      return validationErrorResponse('No data provided for update');
-    }
-    
-    // Prepare update data
-    const updateData: Partial<UserSettings> = {
-      ...body,
-      lastActiveAt: new Date(),
+    // Parse request body - only allow specific fields that can be updated
+    let updateData: {
+      emailNotifications?: boolean;
+      showWritingTips?: boolean;
+      theme?: string;
+      language?: string;
+      autoSaveFrequency?: string;
+      writingStyle?: string;
+      defaultEssayType?: string;
+      essayLength?: string;
+      analyticsEnabled?: boolean;
+      dataSharing?: boolean;
+      lastActiveAt?: Date | null;
     };
     
-    // Update or create user settings
-    const updatedSettings = await prisma.userSettings.upsert({
-      where: { email: userEmail },
-      update: updateData,
-      create: {
-        email: userEmail,
-        ...updateData,
-      },
+    try {
+      const body = await req.json();
+      updateData = body;
+    } catch (e) {
+      return validationErrorResponse('Invalid JSON payload');
+    }
+    
+    // Validate request body
+    if (!updateData || Object.keys(updateData).length === 0) {
+      return validationErrorResponse('No update data provided');
+    }
+    
+    // Check if settings exist
+    const existingSettings = await prisma.userSettings.findUnique({
+      where: { userId },
     });
+
+    let result;
     
-    // Invalidate cache
-    const cacheKey = `user-settings:${userEmail}`;
-    await deleteCache(cacheKey);
+    if (existingSettings) {
+      // Update existing settings
+      result = await prisma.userSettings.update({
+        where: { id: existingSettings.id },
+        data: {
+          ...updateData,
+          lastActiveAt: new Date(),
+        },
+        select: {
+          id: true,
+          userId: true,
+          emailNotifications: true,
+          showWritingTips: true,
+          theme: true,
+          language: true,
+          autoSaveFrequency: true,
+          writingStyle: true,
+          defaultEssayType: true,
+          essayLength: true,
+          analyticsEnabled: true,
+          dataSharing: true,
+          lastActiveAt: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      });
+    } else {
+      // Create new settings with default values
+      result = await prisma.userSettings.create({
+        data: {
+          userId,
+          emailNotifications: updateData.emailNotifications ?? true,
+          showWritingTips: updateData.showWritingTips ?? true,
+          theme: updateData.theme ?? 'system',
+          language: updateData.language ?? 'en',
+          autoSaveFrequency: updateData.autoSaveFrequency ?? '30',
+          writingStyle: updateData.writingStyle ?? 'academic',
+          defaultEssayType: updateData.defaultEssayType ?? 'argumentative',
+          essayLength: updateData.essayLength ?? 'medium',
+          analyticsEnabled: updateData.analyticsEnabled ?? true,
+          dataSharing: updateData.dataSharing ?? false,
+          lastActiveAt: new Date(),
+        },
+        select: {
+          id: true,
+          userId: true,
+          emailNotifications: true,
+          showWritingTips: true,
+          theme: true,
+          language: true,
+          autoSaveFrequency: true,
+          writingStyle: true,
+          defaultEssayType: true,
+          essayLength: true,
+          analyticsEnabled: true,
+          dataSharing: true,
+          lastActiveAt: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      });
+    }
     
-    return successResponse(updatedSettings, {
+    // Invalidate cache after update/create
+    await deleteCache(`user-settings:${userId}`);
+    
+    return successResponse(result, {
       headers: {
         'X-Response-Time': `${Date.now() - startTime}ms`
       }
     });
-    
   } catch (error) {
     console.error('Error in POST /api/user-settings:', error);
     return errorResponse(new Error('Failed to update user settings'), 500);

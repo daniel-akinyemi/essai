@@ -1,5 +1,12 @@
 // Type definitions for recharts
-// This is a workaround for Recharts type issues in Next.js
+// This is a workaround for Recharts type issues in Next.js and Vercel
+
+declare module 'victory-vendor/d3-shape' {
+  export const curveStep: any;
+  export const curveStepBefore: any;
+  export const area: any;
+  // Add other missing exports as needed
+}
 
 declare module 'recharts' {
   export * from 'recharts/types/index';

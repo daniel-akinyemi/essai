@@ -1,4 +1,8 @@
 {
+  "name": "essai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.12.0",

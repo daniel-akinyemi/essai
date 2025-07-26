@@ -2,7 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, Suspense } from "react";
  
 // Theme context
 const ThemeContext = createContext({
@@ -14,7 +14,8 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
-function ThemeProvider({ children }: { children: React.ReactNode }) {
+// Create a separate component for the theme provider content
+function ThemeProviderContent({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState("system");
   const pathname = usePathname();
@@ -65,10 +66,23 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Main ThemeProvider component with Suspense
+function ThemeProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center">Loading...</div>}>
+      <ThemeProviderContent>
+        {children}
+      </ThemeProviderContent>
+    </Suspense>
+  );
+}
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        {children}
+      </ThemeProvider>
     </SessionProvider>
   );
 }

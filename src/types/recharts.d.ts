@@ -4,15 +4,15 @@
 declare module 'victory-vendor/d3-shape' {
   // Basic shapes
   export const area: any;
+  export const line: any;
   
   // Curve types
   export const curveStep: any;
   export const curveStepBefore: any;
+  export const curveStepAfter: any;
   export const curveBasisClosed: any;
   export const curveBasis: any;
   export const curveBumpY: any;
-  
-  // Add other curve types as needed
   export const curveBumpX: any;
   export const curveBundle: any;
   export const curveCardinal: any;
@@ -26,7 +26,31 @@ declare module 'victory-vendor/d3-shape' {
   export const curveMonotoneX: any;
   export const curveMonotoneY: any;
   export const curveNatural: any;
-  export const curveStepAfter: any;
+  
+  // Stack types
+  export const stackOffsetNone: any;
+  export const stackOffsetWiggle: any;
+  export const stackOrderNone: any;
+  
+  // Symbol types
+  export const symbolCross: any;
+  export const symbolSquare: any;
+  export const symbolTriangle: any;
+  export const symbolCircle: any;
+  
+  // Other shape utilities
+  export const shapeArea: any;
+  export const shapeLine: any;
+}
+
+declare module 'victory-vendor/d3-scale' {
+  // Scale types
+  export const scaleBand: any;
+  export const scaleLinear: any;
+  export const scalePoint: any;
+  
+  // Other scale utilities
+  export const d3Scales: any;
 }
 
 declare module 'recharts' {

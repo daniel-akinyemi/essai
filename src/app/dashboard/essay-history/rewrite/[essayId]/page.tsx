@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 
 interface RewritePageProps {
   params: { essayId: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
 export default function RewritePage({ params }: RewritePageProps) {

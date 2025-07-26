@@ -1,6 +1,4 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export default function NotFound() {
   return (
@@ -10,11 +8,12 @@ export default function NotFound() {
       <p className="text-muted-foreground mb-8 max-w-md">
         The page you're looking for doesn't exist or has been moved.
       </p>
-      <Button asChild>
-        <Link href="/">
-          Go back home
-        </Link>
-      </Button>
+      <Link 
+        href="/" 
+        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background bg-primary text-primary-foreground hover:bg-primary/90 h-10 py-2 px-4"
+      >
+        Go back home
+      </Link>
     </div>
   );
 }

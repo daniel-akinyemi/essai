@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { prisma } from "@/lib/prisma";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -9,6 +10,6 @@ Sentry.init({
   replaysOnErrorSampleRate: 0.0,
   // Add server-side specific integrations
   integrations: [
-    new Sentry.Integrations.Prisma({ client: require('@/lib/prisma') }),
+    // The Prisma integration is now automatically included in @sentry/nextjs
   ],
 });

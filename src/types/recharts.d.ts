@@ -2,10 +2,31 @@
 // This is a workaround for Recharts type issues in Next.js and Vercel
 
 declare module 'victory-vendor/d3-shape' {
+  // Basic shapes
+  export const area: any;
+  
+  // Curve types
   export const curveStep: any;
   export const curveStepBefore: any;
-  export const area: any;
-  // Add other missing exports as needed
+  export const curveBasisClosed: any;
+  export const curveBasis: any;
+  export const curveBumpY: any;
+  
+  // Add other curve types as needed
+  export const curveBumpX: any;
+  export const curveBundle: any;
+  export const curveCardinal: any;
+  export const curveCardinalClosed: any;
+  export const curveCardinalOpen: any;
+  export const curveCatmullRom: any;
+  export const curveCatmullRomClosed: any;
+  export const curveCatmullRomOpen: any;
+  export const curveLinear: any;
+  export const curveLinearClosed: any;
+  export const curveMonotoneX: any;
+  export const curveMonotoneY: any;
+  export const curveNatural: any;
+  export const curveStepAfter: any;
 }
 
 declare module 'recharts' {

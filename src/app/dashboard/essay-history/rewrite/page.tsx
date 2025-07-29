@@ -7,11 +7,7 @@ import { Button } from "@/components/ui/button";
 
 export default function RewritePage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <Loader2 className="animate-spin w-8 h-8 text-indigo-500" />
-      </div>
-    }>
+    <Suspense>
       <RewritePageContent />
     </Suspense>
   );

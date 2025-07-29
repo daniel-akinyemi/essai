@@ -2,25 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { FileText, AlertCircle, Loader2, TrendingUp, Target, CheckCircle, Search, Download } from 'lucide-react';
+import { FileText, Search, AlertCircle, Loader2, TrendingUp, Target, CheckCircle, Search as SearchIcon, Download } from 'lucide-react';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { AutoSaveStatus } from '@/components/ui/auto-save-status';
-import dynamic from 'next/dynamic';
-
-// Dynamically import jsPDF to avoid SSR issues
-const JsPDF = dynamic<typeof import('jspdf')>(
-  () => import('jspdf').then((mod) => mod as any),
-  { 
-    ssr: false,
-    loading: () => null
-  }
-);
-
-// Define types for user settings
-interface UserSettings {
-  autoSaveFrequency: string;
-  showWritingTips?: boolean;
-}
+import jsPDF from 'jspdf';
 
 interface ParagraphAnalysis {
   paragraph: number;
@@ -141,7 +126,7 @@ export default function ParagraphAnalyzerPage() {
       }
       // Automatically save analysis result to history
       const contentToSave = data.fixedEssay || essay;
-      const feedbackSummary = data.relevanceReport.map((p: ParagraphAnalysis) => p.feedback).join(' ');
+      const feedbackSummary = data.relevanceReport.map((p: any) => p.feedback).join(' ');
       await fetch('/api/essays', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -197,23 +182,14 @@ export default function ParagraphAnalyzerPage() {
     }
   };
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = () => {
     if (!fixedEssay) return;
-    
-    try {
-      // Dynamically import jsPDF when needed
-      const { default: JsPDF } = await import('jspdf');
-      
-      const doc = new JsPDF();
-      doc.setFont("times", "normal"); // Use Times (Times New Roman style)
-      doc.setFontSize(12);
-      const lines = doc.splitTextToSize(fixedEssay, 180);
-      doc.text(lines, 10, 10);
-      doc.save('fixed-essay.pdf');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      setError('Failed to generate PDF. Please try again.');
-    }
+    const doc = new jsPDF();
+    doc.setFont("times", "normal"); // Use Times (Times New Roman style)
+    doc.setFontSize(12);
+    const lines = doc.splitTextToSize(fixedEssay, 180);
+    doc.text(lines, 10, 10);
+    doc.save('fixed-essay.pdf');
   };
 
   return (

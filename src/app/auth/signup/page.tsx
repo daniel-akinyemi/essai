@@ -1,20 +1,23 @@
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Suspense } from "react";
 import Link from "next/link";
 import AuthForm from "@/components/AuthForm";
-import { Sparkles, BookOpen, Target, TrendingUp, Shield, Zap } from "lucide-react";
+import { Sparkles, BookOpen, Target, Shield, Zap } from "lucide-react";
+import { AuthSkeleton } from "@/components/ui/auth-skeleton";
 
-export default function SignUpPage() {
+function SignUpContent() {
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Features (was right) */}
+      {/* Left Side - Features */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+        
         {/* Floating Elements */}
         <div className="absolute top-20 right-20 w-32 h-32 bg-white/10 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute bottom-20 left-20 w-24 h-24 bg-white/10 rounded-full blur-xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-white/10 rounded-full blur-xl animate-pulse delay-500"></div>
-        <div className="relative z-10 flex items-center justify-center w-full">
+        
+        <div className="relative z-10 flex items-center justify-center w-full p-8">
           <div className="max-w-lg text-white text-center space-y-8">
             <div className="space-y-4">
               <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto backdrop-blur-sm">
@@ -25,61 +28,46 @@ export default function SignUpPage() {
                 Create your account and discover the power of AI-enhanced writing tools designed to elevate your essays.
               </p>
             </div>
+            
             {/* Feature Cards */}
             <div className="grid grid-cols-1 gap-6 mt-12">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <BookOpen className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-lg">Essay Generator</h3>
-                    <p className="text-purple-100 text-sm">Create high-quality essays with AI assistance</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <Target className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-lg">Smart Analysis</h3>
-                    <p className="text-purple-100 text-sm">Get detailed feedback and scoring</p>
+              {[
+                { icon: <BookOpen className="h-6 w-6 text-white" />, title: "Essay Generator", description: "Create high-quality essays with AI assistance" },
+                { icon: <Target className="h-6 w-6 text-white" />, title: "Smart Analysis", description: "Get detailed feedback and scoring" },
+                { icon: <Shield className="h-6 w-6 text-white" />, title: "Secure & Private", description: "Your data is protected and confidential" }
+              ].map((feature, index) => (
+                <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                      {feature.icon}
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-lg">{feature.title}</h3>
+                      <p className="text-purple-100 text-sm">{feature.description}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <Shield className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-lg">Secure & Private</h3>
-                    <p className="text-purple-100 text-sm">Your data is protected and confidential</p>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
+            
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 mt-8">
-              <div className="text-center">
-                <div className="text-2xl font-bold">10K+</div>
-                <div className="text-purple-100 text-sm">Active Users</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">50K+</div>
-                <div className="text-purple-100 text-sm">Essays Analyzed</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">4.9★</div>
-                <div className="text-purple-100 text-sm">User Rating</div>
-              </div>
+              {[
+                { value: "10K+", label: "Active Users" },
+                { value: "50K+", label: "Essays Analyzed" },
+                { value: "4.9★", label: "User Rating" }
+              ].map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-purple-100 text-sm">{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
-      {/* Right Side - Form (was left) */}
+      
+      {/* Right Side - Form */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
@@ -105,10 +93,12 @@ export default function SignUpPage() {
               </Link>
             </p>
           </div>
+          
           {/* Auth Form */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-8">
             <AuthForm mode="signup" />
           </div>
+          
           {/* Footer */}
           <div className="text-center">
             <p className="text-sm text-gray-500">
@@ -126,4 +116,16 @@ export default function SignUpPage() {
       </div>
     </div>
   );
-} 
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <AuthSkeleton />
+      </div>
+    }>
+      <SignUpContent />
+    </Suspense>
+  );
+}

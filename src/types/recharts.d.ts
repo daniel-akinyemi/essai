@@ -10,8 +10,9 @@ declare module 'victory-vendor/d3-shape' {
   export const curveStep: any;
   export const curveStepBefore: any;
   export const curveStepAfter: any;
-  export const curveBasisClosed: any;
   export const curveBasis: any;
+  export const curveBasisClosed: any;
+  export const curveBasisOpen: any;
   export const curveBumpY: any;
   export const curveBumpX: any;
   export const curveBundle: any;
@@ -28,19 +29,28 @@ declare module 'victory-vendor/d3-shape' {
   export const curveNatural: any;
   
   // Stack types
+  export const stack: any;
+  export const stackOffsetExpand: any;
   export const stackOffsetNone: any;
+  export const stackOffsetSilhouette: any;
   export const stackOffsetWiggle: any;
   export const stackOrderNone: any;
   
   // Symbol types
-  export const symbolCross: any;
-  export const symbolSquare: any;
-  export const symbolTriangle: any;
+  export const symbol: any;
   export const symbolCircle: any;
+  export const symbolCross: any;
+  export const symbolDiamond: any;
+  export const symbolSquare: any;
+  export const symbolStar: any;
+  export const symbolTriangle: any;
+  export const symbolWye: any;
   
   // Other shape utilities
   export const shapeArea: any;
   export const shapeLine: any;
+  export const shapeStack: any;
+  export const shapeSymbol: any;
   
   // Default export for d3-shape
   const d3Shape: any;
@@ -52,9 +62,54 @@ declare module 'victory-vendor/d3-scale' {
   export const scaleBand: any;
   export const scaleLinear: any;
   export const scalePoint: any;
+  export const scaleTime: any;
+  export const scaleUtc: any;
+  export const scaleLog: any;
+  export const scalePow: any;
+  export const scaleSqrt: any;
+  export const scaleSymlog: any;
+  export const scaleOrdinal: any;
+  export const scaleQuantile: any;
+  export const scaleQuantize: any;
+  export const scaleThreshold: any;
+  export const scaleSequential: any;
+  export const scaleSequentialLog: any;
+  export const scaleSequentialPow: any;
+  export const scaleSequentialSqrt: any;
+  export const scaleSequentialSymlog: any;
+  export const scaleSequentialQuantile: any;
+  
+  // Scale methods
+  export const scaleDiverging: any;
+  export const scaleDivergingLog: any;
+  export const scaleDivergingPow: any;
+  export const scaleDivergingSqrt: any;
+  export const scaleDivergingSymlog: any;
   
   // Other scale utilities
   export const d3Scales: any;
+  export const scaleImplicit: any;
+  export const schemeCategory10: any;
+  export const schemeAccent: any;
+  export const schemeDark2: any;
+  export const schemePaired: any;
+  export const schemePastel1: any;
+  export const schemePastel2: any;
+  export const schemeSet1: any;
+  export const schemeSet2: any;
+  export const schemeSet3: any;
+  export const schemeTableau10: any;
+  
+  // Interpolators
+  export const interpolateCubehelixDefault: any;
+  export const interpolateRainbow: any;
+  export const interpolateWarm: any;
+  export const interpolateCool: any;
+  export const interpolateViridis: any;
+  export const interpolateInferno: any;
+  export const interpolateMagma: any;
+  export const interpolatePlasma: any;
+  export const interpolateCividis: any;
   
   // Default export for d3-scale
   const d3Scale: any;

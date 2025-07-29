@@ -9,19 +9,6 @@ import { useRef } from "react";
 import { useTheme } from "@/components/Providers";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 
-// Helper component to prevent hydration mismatch
-const ClientOnly = ({ children }: { children: React.ReactNode }) => {
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
-  if (!mounted) return null;
-  
-  return <>{children}</>;
-};
-
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -151,28 +138,22 @@ export default function Sidebar({ isOpen, onClose, activePage, onPageChange }: S
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">E</span>
             </div>
-            <ClientOnly>
-              {!collapsed && <span className="text-xl font-bold text-gray-900">Essai</span>}
-            </ClientOnly>
+            {!collapsed && <span className="text-xl font-bold text-gray-900">Essai</span>}
           </div>
           <div className="flex items-center gap-2">
-            <ClientOnly>
-              <button
-                onClick={() => setCollapsed((c) => !c)}
-                className="hidden lg:inline-flex p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                suppressHydrationWarning
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <button
-                onClick={onClose}
-                className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                suppressHydrationWarning
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </ClientOnly>
+            <button
+              onClick={() => setCollapsed((c) => !c)}
+              className="hidden lg:inline-flex p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+          >
+            <X className="h-5 w-5" />
+          </button>
           </div>
         </div>
         {/* Navigation */}

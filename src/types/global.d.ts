@@ -1,10 +1,15 @@
-// Type declarations for d3-shape and victory-vendor compatibility
+// Type declarations for d3 and lodash compatibility
+declare module 'd3-scale';
+declare module 'd3-shape';
+declare module 'lodash';
+
+// Victory vendor type declarations
 declare module 'victory-vendor/d3-shape' {
-  export * from 'd3-shape';
+  const d3Shape: any;
+  export default d3Shape;
 }
 
 declare module 'victory-vendor/lib/vendor/d3-shape' {
-  export * from 'd3-shape';
+  const d3Shape: any;
+  export default d3Shape;
 }
-
-// Add any other global type declarations as needed

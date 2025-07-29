@@ -5,28 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Edit3, Copy, Download, CheckCircle, AlertCircle, Loader2, Eye, EyeOff, RefreshCw, Sparkles, Lightbulb, RotateCcw, Settings } from 'lucide-react';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { AutoSaveStatus } from '@/components/ui/auto-save-status';
-import dynamic from 'next/dynamic';
-
-// Dynamically import jsPDF to avoid SSR issues
-const JsPDF = dynamic(
-  () => import('jspdf').then((mod) => {
-    // Create a component that will handle the PDF generation
-    return function JsPDFWrapper() {
-      return null; // This is a placeholder, actual usage is in the component
-    };
-  }),
-  { 
-    ssr: false,
-    loading: () => <div>Loading PDF generator...</div>
-  }
-);
-
-// Define types for user settings
-interface UserSettings {
-  writingStyle: string;
-  autoSaveFrequency: string;
-  showWritingTips: boolean;
-}
+import jsPDF from 'jspdf';
 
 interface RewriteResult {
   rewrittenEssay: string;
@@ -284,23 +263,14 @@ export default function EssayRewriterPage() {
     document.body.removeChild(element);
   };
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = () => {
     if (!rewriteResult?.rewrittenEssay) return;
-    
-    try {
-      // Dynamically import jsPDF when needed
-      const { default: JsPDF } = await import('jspdf');
-      
-      const doc = new JsPDF();
-      doc.setFont("times", "normal"); // Use Times (Times New Roman style)
-      doc.setFontSize(12);
-      const lines = doc.splitTextToSize(rewriteResult.rewrittenEssay, 180);
-      doc.text(lines, 10, 10);
-      doc.save('rewritten-essay.pdf');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      setError('Failed to generate PDF. Please try again.');
-    }
+    const doc = new jsPDF();
+    doc.setFont("times", "normal"); // Use Times (Times New Roman style)
+    doc.setFontSize(12);
+    const lines = doc.splitTextToSize(rewriteResult.rewrittenEssay, 180);
+    doc.text(lines, 10, 10);
+    doc.save('rewritten-essay.pdf');
   };
 
   const resetForm = () => {

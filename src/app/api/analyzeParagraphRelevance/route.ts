@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOpenRouterClient } from '../../../lib/openrouter';
+import { openRouterClient } from '../../../lib/openrouter';
 import type { OpenRouterMessage } from '../../../lib/openrouter';
-
-if (!process.env.OPENROUTER_API_KEY) {
-  console.warn('WARNING: OPENROUTER_API_KEY is not set. The analyzeParagraphRelevance API will not function correctly.');
-}
 
 interface ParagraphRelevanceRequest {
   topic: string;
@@ -190,16 +186,6 @@ function fallbackParagraphSplit(text: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.OPENROUTER_API_KEY) {
-    return NextResponse.json(
-      { 
-        error: 'OpenRouter API is not configured',
-        message: 'This feature requires an OpenRouter API key to be set in the environment variables.'
-      },
-      { status: 503, statusText: 'Service Unavailable' }
-    );
-  }
-
   try {
     const { topic, essay, autoFix = false }: ParagraphRelevanceRequest = await request.json();
 
@@ -246,7 +232,6 @@ ${autoFix ? `When providing Auto-Fix:
 
     // Use a reliable model for analysis
     const model = 'mistralai/mistral-7b-instruct:free';
-    const openRouterClient = getOpenRouterClient();
     const response = await openRouterClient.chatCompletion(messages, model);
 
     // Clean the response and extract JSON

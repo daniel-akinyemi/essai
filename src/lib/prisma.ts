@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 declare global {
   var prisma: PrismaClient | undefined;
@@ -18,13 +18,7 @@ export const prisma = globalThis.prisma || new PrismaClient({
 
 // Only enable query logging in development
 if (process.env.NODE_ENV === 'development') {
-  prisma.$on('query', (e: {
-    timestamp: Date;
-    query: string;
-    params: string;
-    duration: number;
-    target: string;
-  }) => {
+  prisma.$on('query' as never, (e: Prisma.QueryEvent) => {
     // You can optionally log queries in development if needed
     // console.log('Query: ' + e.query)
     // console.log('Params: ' + e.params)

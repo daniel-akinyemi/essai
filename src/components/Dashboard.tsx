@@ -8,18 +8,11 @@ import {
   PlusCircle,
   Loader2,
   LogOut,
+  Star,
 } from 'lucide-react';
 import Link from "next/link";
 import { signOut } from 'next-auth/react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from 'recharts';
+
 
 // Add types for activity and trends
 interface ActivityItem {
@@ -339,21 +332,63 @@ const App = () => {
 
         {/* Right/Sidebar Column */}
         <aside className="space-y-8">
-          {/* Generation Trends Chart */}
+          {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-green-600" /> Generation Trends
+              <Activity className="h-5 w-5 text-indigo-600" /> Quick Actions
             </h3>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trends} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={3} dot={{ r: 5 }} />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="space-y-3">
+              <Link 
+                href="/dashboard/essay-generator" 
+                className="flex items-center gap-3 p-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">Generate New Essay</div>
+                  <p className="text-sm text-gray-500">Start a new essay from scratch</p>
+                </div>
+              </Link>
+              
+              <Link 
+                href="/dashboard/essay-history" 
+                className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">View History</div>
+                  <p className="text-sm text-gray-500">Check your previous essays</p>
+                </div>
+              </Link>
+              
+              <Link 
+                href="/dashboard/writing-guide" 
+                className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">Writing Guide</div>
+                  <p className="text-sm text-gray-500">Improve your writing skills</p>
+                </div>
+              </Link>
+              
+              <Link 
+                href="/dashboard/score-essay" 
+                className="flex items-center gap-3 p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <Star className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">Score an Essay</div>
+                  <p className="text-sm text-gray-500">Get instant feedback</p>
+                </div>
+              </Link>
             </div>
           </div>
         </aside>

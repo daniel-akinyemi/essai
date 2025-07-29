@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { EyeIcon, EyeSlashIcon, ClipboardIcon, KeyIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, ClipboardDocumentIcon as ClipboardIcon, KeyIcon } from '@heroicons/react/outline';
 
 export default function APIKey() {
   const [apiKey, setApiKey] = useState<string | null>(null);

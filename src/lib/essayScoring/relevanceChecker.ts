@@ -1,4 +1,4 @@
-import { getOpenRouterClient } from '../openrouter';
+import { openRouterClient } from '../openrouter';
 import type { OpenRouterMessage } from '../openrouter';
 
 // Function to detect if topic specifies a country or region
@@ -99,7 +99,6 @@ export async function checkRelevance(topic: string, essay: string) {
   ];
   
   const model = 'mistralai/mistral-7b-instruct:free';
-  const openRouterClient = getOpenRouterClient();
   const response = await openRouterClient.chatCompletion(messages, model);
 
   // Extract first JSON array from the response

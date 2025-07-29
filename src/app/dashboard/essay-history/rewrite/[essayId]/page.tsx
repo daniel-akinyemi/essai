@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import jsPDF from 'jspdf';
@@ -9,9 +9,15 @@ interface RewritePageProps {
   params: { essayId: string };
 }
 
+// Server Component that fetches params
+async function getParams(params: { essayId: string }) {
+  return params;
+}
+
 export default function RewritePage({ params }: RewritePageProps) {
   const router = useRouter();
-  const essayId = params.essayId;
+  // Use React.use() to unwrap the params promise
+  const { essayId } = use(getParams(params));
   const [essay, setEssay] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

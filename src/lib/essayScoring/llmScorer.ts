@@ -1,4 +1,4 @@
-import { getOpenRouterClient } from '@/lib/openrouter';
+import { openRouterClient } from '@/lib/openrouter';
 import type { OpenRouterMessage } from '@/lib/openrouter';
 
 const scoringPrompt = `
@@ -43,7 +43,7 @@ export async function llmScoreEssay(essay: string) {
     { role: 'user', content: essay }
   ];
   const model = 'mistralai/mistral-7b-instruct:free';
-  const client = getOpenRouterClient();
+  const client = openRouterClient;
   const response = await client.chatCompletion(messages, model);
 
   // Extract JSON from response

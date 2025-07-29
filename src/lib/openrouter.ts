@@ -238,15 +238,4 @@ Example format: ["Improve thesis statement clarity", "Add more supporting eviden
   }
 }
 
-// Singleton instance
-let openRouterClientInstance: OpenRouterClient | null = null;
-
-export const getOpenRouterClient = (): OpenRouterClient => {
-  if (!openRouterClientInstance) {
-    openRouterClientInstance = new OpenRouterClient();
-  }
-  return openRouterClientInstance;
-};
-
-// For backward compatibility
-export const openRouterClient = getOpenRouterClient();
+export const openRouterClient = new OpenRouterClient();

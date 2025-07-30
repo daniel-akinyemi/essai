@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { EyeIcon, EyeSlashIcon, ClipboardDocumentIcon as ClipboardIcon, KeyIcon } from '@heroicons/react/outline';
+import { Key, Eye, EyeOff, Clipboard } from 'lucide-react';
 
 export default function APIKey() {
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -51,7 +51,8 @@ export default function APIKey() {
             <div className="space-y-8">
               {/* Key Generation Section */}
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                <h2 className="flex items-center gap-2 text-2xl font-semibold text-gray-900 mb-4">
+                  <Key className="w-5 h-5 text-gray-600" />
                   Your API Key
                 </h2>
                 <p className="text-gray-600 mb-6">
@@ -72,16 +73,16 @@ export default function APIKey() {
                               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                               {showKey ? (
-                                <EyeSlashIcon className="w-5 h-5 text-gray-600" />
+                                <EyeOff className="w-5 h-5 text-gray-600" />
                               ) : (
-                                <EyeIcon className="w-5 h-5 text-gray-600" />
+                                <Eye className="w-5 h-5 text-gray-600" />
                               )}
                             </button>
                             <button
                               onClick={copyToClipboard}
                               className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative"
                             >
-                              <ClipboardIcon className="w-5 h-5 text-gray-600" />
+                              <Clipboard className="w-5 h-5 text-gray-600" />
                               {copied && (
                                 <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs py-1 px-2 rounded">
                                   Copied!
@@ -104,7 +105,7 @@ export default function APIKey() {
                     onClick={generateKey}
                     className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 transition-all duration-300"
                   >
-                    <KeyIcon className="w-5 h-5 mr-2" />
+                    <Key className="w-5 h-5 mr-2" />
                     Generate API Key
                   </button>
                 )}

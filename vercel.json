@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
-  "outputDirectory": ".next",
+  "outputDirectory": ".vercel/output",
   "routes": [
     {
       "src": "/api/(.*)",
@@ -19,6 +19,7 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "DEBUG": "true"
   }
 }

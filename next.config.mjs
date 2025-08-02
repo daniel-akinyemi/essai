@@ -11,9 +11,9 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
       allowedOrigins: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000']
-    },
-    serverComponentsExternalPackages: ['@prisma/client']
+    }
   },
+  serverExternalPackages: ['@prisma/client'],
 
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',

@@ -3,7 +3,6 @@ process.env.NEXT_DISABLE_STRICT_PNPM_CHECK = 'true';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   reactStrictMode: process.env.NODE_ENV !== 'development',
 
   env: {

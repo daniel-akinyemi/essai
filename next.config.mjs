@@ -3,8 +3,17 @@ process.env.NEXT_DISABLE_STRICT_PNPM_CHECK = 'true';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   reactStrictMode: process.env.NODE_ENV !== 'development',
+  // Use standalone output for better serverless compatibility
+  output: 'standalone',
+  // Enable experimental features
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+      allowedOrigins: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000']
+    },
+    serverComponentsExternalPackages: ['@prisma/client']
+  },
 
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',

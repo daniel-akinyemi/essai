@@ -2,7 +2,6 @@
   "version": 2,
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
-  "outputDirectory": ".vercel/output",
   "routes": [
     {
       "src": "/api/(.*)",
@@ -12,14 +11,9 @@
         "Access-Control-Allow-Methods": "GET,OPTIONS,PATCH,DELETE,POST,PUT",
         "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
       }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/"
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "DEBUG": "true"
+    "NODE_ENV": "production"
   }
 }

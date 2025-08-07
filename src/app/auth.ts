@@ -11,11 +11,40 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/signin",
+  },
+  theme: {
+    colorScheme: "light",
+    brandColor: "#000000",
+    logo: "/logo.png",
+  },
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',  
+        path: '/',
+        secure: true,
+        domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : undefined,
+      },
+    },
   },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: 'offline',
+          response_type: 'code',
+          scope: 'openid email profile',
+        },
+      },
+      httpOptions: {
+        timeout: 40000, // 40 seconds
+      },
     }),
     Credentials({
       name: "credentials",

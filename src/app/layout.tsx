@@ -28,8 +28,9 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+    { media: '(prefers-color-scheme: dark)', color: '#1a1a1a' },
   ],
+  colorScheme: 'light dark',
 };
 
 export default function RootLayout({
@@ -38,13 +39,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col`}>
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col bg-white text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-200`}>
         <Providers>
           <ThemeLoader />
           <ConditionalNavigation />
-          <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            {children}
+          <main className="flex-1 w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white dark:bg-gray-900">
+            <div className="min-h-[calc(100vh-8rem)]">
+              {children}
+            </div>
           </main>
         </Providers>
       </body>

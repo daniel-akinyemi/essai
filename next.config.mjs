@@ -100,7 +100,7 @@ const nextConfig = {
             chunks: 'all',
             priority: 20,
           },
-        },
+         },
       };
     }
 

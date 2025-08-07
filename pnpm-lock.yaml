@@ -25,10 +25,10 @@ dependencies:
     version: 1.2.7(@types/react-dom@19.1.7)(@types/react@19.1.9)(react-dom@18.3.1)(react@18.3.1)
   '@supabase/auth-helpers-nextjs':
     specifier: ^0.10.0
-    version: 0.10.0(@supabase/supabase-js@2.53.1)
+    version: 0.10.0(@supabase/supabase-js@2.54.0)
   '@supabase/supabase-js':
     specifier: ^2.52.0
-    version: 2.53.1
+    version: 2.54.0
   '@swc/helpers':
     specifier: ^0.5.0
     version: 0.5.17
@@ -109,7 +109,7 @@ dependencies:
     version: 2.0.7(react-dom@18.3.1)(react@18.3.1)
   styled-jsx:
     specifier: ^5.1.0
-    version: 5.1.0(@babel/core@7.28.0)(react@18.3.1)
+    version: 5.1.7(@babel/core@7.28.0)(react@18.3.1)
   tailwind-merge:
     specifier: ^3.3.1
     version: 3.3.1
@@ -2485,24 +2485,24 @@ packages:
   /@standard-schema/spec@1.0.0:
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
 
-  /@supabase/auth-helpers-nextjs@0.10.0(@supabase/supabase-js@2.53.1):
+  /@supabase/auth-helpers-nextjs@0.10.0(@supabase/supabase-js@2.54.0):
     resolution: {integrity: sha512-2dfOGsM4yZt0oS4TPiE7bD4vf7EVz7NRz/IJrV6vLg0GP7sMUx8wndv2euLGq4BjN9lUCpu6DG/uCC8j+ylwPg==}
     deprecated: This package is now deprecated - please use the @supabase/ssr package instead.
     peerDependencies:
       '@supabase/supabase-js': ^2.39.8
     dependencies:
-      '@supabase/auth-helpers-shared': 0.7.0(@supabase/supabase-js@2.53.1)
-      '@supabase/supabase-js': 2.53.1
+      '@supabase/auth-helpers-shared': 0.7.0(@supabase/supabase-js@2.54.0)
+      '@supabase/supabase-js': 2.54.0
       set-cookie-parser: 2.7.1
     dev: false
 
-  /@supabase/auth-helpers-shared@0.7.0(@supabase/supabase-js@2.53.1):
+  /@supabase/auth-helpers-shared@0.7.0(@supabase/supabase-js@2.54.0):
     resolution: {integrity: sha512-FBFf2ei2R7QC+B/5wWkthMha8Ca2bWHAndN+syfuEUUfufv4mLcAgBCcgNg5nJR8L0gZfyuaxgubtOc9aW3Cpg==}
     deprecated: This package is now deprecated - please use the @supabase/ssr package instead.
     peerDependencies:
       '@supabase/supabase-js': ^2.39.8
     dependencies:
-      '@supabase/supabase-js': 2.53.1
+      '@supabase/supabase-js': 2.54.0
       jose: 4.15.9
     dev: false
 
@@ -2531,13 +2531,12 @@ packages:
       '@supabase/node-fetch': 2.6.15
     dev: false
 
-  /@supabase/realtime-js@2.11.15:
-    resolution: {integrity: sha512-HQKRnwAqdVqJW/P9TjKVK+/ETpW4yQ8tyDPPtRMKOH4Uh3vQD74vmj353CYs8+YwVBKubeUOOEpI9CT8mT4obw==}
+  /@supabase/realtime-js@2.15.0:
+    resolution: {integrity: sha512-SEIWApsxyoAe68WU2/5PCCuBwa11LL4Bb8K3r2FHCt3ROpaTthmDiWEhnLMGayP05N4QeYrMk0kyTZOwid/Hjw==}
     dependencies:
       '@supabase/node-fetch': 2.6.15
       '@types/phoenix': 1.6.6
       '@types/ws': 8.18.1
-      isows: 1.0.7(ws@8.18.3)
       ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
@@ -2550,14 +2549,14 @@ packages:
       '@supabase/node-fetch': 2.6.15
     dev: false
 
-  /@supabase/supabase-js@2.53.1:
-    resolution: {integrity: sha512-I+wfrBlBNsN7NlAp5TzhR4jtGuLbP3c5nrxGEE5loS6ltBslKuupLfQtvsq5X7dEMI2UiJBEsnwtonAiHY7Z+w==}
+  /@supabase/supabase-js@2.54.0:
+    resolution: {integrity: sha512-DLw83YwBfAaFiL3oWV26+sHRdeCGtxmIKccjh/Pndze3BWM4fZghzYKhk3ElOQU8Bluq4AkkCJ5bM5Szl/sfRg==}
     dependencies:
       '@supabase/auth-js': 2.71.1
       '@supabase/functions-js': 2.4.5
       '@supabase/node-fetch': 2.6.15
       '@supabase/postgrest-js': 1.19.4
-      '@supabase/realtime-js': 2.11.15
+      '@supabase/realtime-js': 2.15.0
       '@supabase/storage-js': 2.10.4
     transitivePeerDependencies:
       - bufferutil
@@ -4156,14 +4155,6 @@ packages:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
     dev: true
 
-  /isows@1.0.7(ws@8.18.3):
-    resolution: {integrity: sha512-I1fSfDCZL5P0v33sVqeTDSpcstAg/N+wF5HS033mogOVIp4B+oHC7oOCsA3axAbBSGTJ8QubbNmnIRN/h8U7hg==}
-    peerDependencies:
-      ws: '*'
-    dependencies:
-      ws: 8.18.3
-    dev: false
-
   /jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
     dependencies:
@@ -5515,24 +5506,6 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /styled-jsx@5.1.0(@babel/core@7.28.0)(react@18.3.1):
-    resolution: {integrity: sha512-/iHaRJt9U7T+5tp6TRelLnqBqiaIT0HsO0+vgyj8hK2KUk7aejFqRrumqPUlAqDwAj8IbS/1hk3IhBAAK/FCUQ==}
-    engines: {node: '>= 12.0.0'}
-    peerDependencies:
-      '@babel/core': '*'
-      babel-plugin-macros: '*'
-      react: '>= 16.8.0 || 17.x.x || ^18.0.0-0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      babel-plugin-macros:
-        optional: true
-    dependencies:
-      '@babel/core': 7.28.0
-      client-only: 0.0.1
-      react: 18.3.1
-    dev: false
-
   /styled-jsx@5.1.6(@babel/core@7.28.0)(react@18.3.1):
     resolution: {integrity: sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA==}
     engines: {node: '>= 12.0.0'}
@@ -5549,6 +5522,24 @@ packages:
       '@babel/core': 7.28.0
       client-only: 0.0.1
       react: 18.3.1
+
+  /styled-jsx@5.1.7(@babel/core@7.28.0)(react@18.3.1):
+    resolution: {integrity: sha512-HPLmEIYprxCeWDMLYiaaAhsV3yGfIlCqzuVOybE6fjF3SUJmH67nCoMDO+nAvHNHo46OfvpCNu4Rcue82dMNFg==}
+    engines: {node: '>= 12.0.0'}
+    peerDependencies:
+      '@babel/core': '*'
+      babel-plugin-macros: '*'
+      react: '>= 16.8.0 || 17.x.x || ^18.0.0-0 || ^19.0.0-0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      babel-plugin-macros:
+        optional: true
+    dependencies:
+      '@babel/core': 7.28.0
+      client-only: 0.0.1
+      react: 18.3.1
+    dev: false
 
   /sucrase@3.35.0:
     resolution: {integrity: sha512-8EbVDiu9iN/nESwxeSxDKe0dunta1GOlHufmSSXxMD2z2/tMZpDMpvXQGsc+ajGo8y2uYUmixaSRUc/QPoQ0GA==}

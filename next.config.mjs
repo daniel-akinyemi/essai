@@ -1,41 +1,36 @@
 // @ts-check
-process.env.NEXT_DISABLE_STRICT_PNPM_CHECK = 'true';
+const isVercel = process.env.VERCEL === '1';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: process.env.NODE_ENV !== 'development',
-  // Use standalone output for better serverless compatibility
-// output: 'standalone',  // ❌ not needed for Vercel
-  // Enable experimental features
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
-      allowedOrigins: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000']
-    }
+      allowedOrigins: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'],
+    },
   },
   serverExternalPackages: ['@prisma/client'],
-
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
     OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
-    // Don't expose secrets unless needed on client side
   },
-
   eslint: {
     ignoreDuringBuilds: true,
   },
-
   typescript: {
     ignoreBuildErrors: true,
   },
+  productionBrowserSourceMaps: true,
+};
 
-  webpack: (config, { isServer, dev }) => {
-    // Add support for importing TypeScript files
+// Disable custom Webpack config on Vercel
+if (!isVercel) {
+  nextConfig.webpack = (config, { isServer, dev }) => {
     config.resolve.extensions.push('.ts', '.tsx');
     config.resolve.symlinks = false;
     config.resolve.preferRelative = true;
 
-    // Add fallbacks for Node.js built-ins
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -45,11 +40,9 @@ const nextConfig = {
       child_process: false,
     };
 
-    // Add aliases for d3-shape and related modules
     config.resolve.alias = {
       ...config.resolve.alias,
       'hoist-non-react-statics': 'hoist-non-react-statics',
-      // Explicitly map d3-* modules to their direct dependencies
       'd3-shape': 'd3-shape',
       'd3-scale': 'd3-scale',
       'd3-array': 'd3-array',
@@ -60,12 +53,10 @@ const nextConfig = {
       'd3-color': 'd3-color',
       'd3-path': 'd3-path',
       'd3-ease': 'd3-ease',
-      // Victory vendor aliases
       'victory-vendor/lib/vendor/d3-shape': 'd3-shape',
       'victory-vendor/lib/vendor/d3-scale': 'd3-scale',
     };
 
-    // Fix for hoist-non-react-statics
     config.module.rules.push({
       test: /hoist-non-react-statics/,
       resolve: {
@@ -73,7 +64,6 @@ const nextConfig = {
       },
     });
 
-    // Only optimize chunks in production
     if (!isServer && !dev) {
       config.optimization.splitChunks = {
         chunks: 'all',
@@ -87,7 +77,6 @@ const nextConfig = {
             priority: -10,
             reuseExistingChunk: true,
           },
-          // Create a separate chunk for d3 and victory
           d3: {
             test: /[\\/]node_modules[\\/](d3-|victory-)/,
             name: 'd3-vendor',
@@ -100,14 +89,12 @@ const nextConfig = {
             chunks: 'all',
             priority: 20,
           },
-         },
+        },
       };
     }
 
     return config;
-  },
-
-  productionBrowserSourceMaps: true,
-};
+  };
+}
 
 export default nextConfig;

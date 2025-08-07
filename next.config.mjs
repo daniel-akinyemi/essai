@@ -5,7 +5,7 @@ process.env.NEXT_DISABLE_STRICT_PNPM_CHECK = 'true';
 const nextConfig = {
   reactStrictMode: process.env.NODE_ENV !== 'development',
   // Use standalone output for better serverless compatibility
-  output: 'standalone',
+// output: 'standalone',  // ❌ not needed for Vercel
   // Enable experimental features
   experimental: {
     serverActions: {

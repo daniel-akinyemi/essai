@@ -44,8 +44,7 @@ export default function DashboardLayout({
         onSignOut={() => signOut({ callbackUrl: '/' })}
       />
       
-      {/* Add padding top to account for fixed header */}
-      <div className="pt-16 flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Overlay for mobile when sidebar is open - Moved inside flex container */}
         {sidebarOpen && (
           <div 

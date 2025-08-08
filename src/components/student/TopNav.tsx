@@ -1,20 +1,10 @@
 'use client';
 
-import { Menu, Bell, User, LogOut, ChevronDown, CheckCircle, FileText, BookOpen, Settings, Shield, Save, Clock, Palette, AlertCircle } from "lucide-react";
+import { Menu, Bell, User, LogOut, ChevronDown, CheckCircle, FileText, BookOpen, Settings, Shield, Save, Clock, Palette } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { useTheme } from "@/components/Providers";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface TopNavProps {
   onMenuClick: () => void;
@@ -38,7 +28,6 @@ export default function TopNav({ onMenuClick, user, onSignOut }: TopNavProps) {
   const [language, setLanguage] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   
   // New settings states
   const [writingStyle, setWritingStyle] = useState('academic');
@@ -173,40 +162,21 @@ export default function TopNav({ onMenuClick, user, onSignOut }: TopNavProps) {
     setShowSettings(false);
   };
 
-  const handleSignOutClick = () => {
-    setShowSignOutConfirm(true);
-  };
-
-  const confirmSignOut = async () => {
-    if (onSignOut) {
-      await onSignOut();
-    }
-    setShowSignOutConfirm(false);
-  };
-
   return (
-    <>
-      <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4 lg:px-6 fixed top-0 left-0 right-0 z-[100]" style={{ position: 'fixed', top: 0, left: 0, right: 0 }}>
-        {/* Left side - Menu button and title */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onMenuClick}
-            className="p-2 -ml-1 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:hidden"
-            aria-label="Toggle menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <button
-            onClick={onMenuClick}
-            className="hidden md:flex p-2 -ml-1 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            aria-label="Toggle menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <div className="hidden md:block">
-            <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-          </div>
+    <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center justify-between px-4 lg:px-6">
+      {/* Left side - Menu button and title */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden p-2 -ml-1 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label="Toggle menu"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+        <div className="hidden lg:block">
+          <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
         </div>
+      </div>
 
       {/* Right side - Notifications and user menu */}
       <div className="flex items-center space-x-4">
@@ -536,11 +506,14 @@ export default function TopNav({ onMenuClick, user, onSignOut }: TopNavProps) {
                 </p>
               </div>
               <button
-                onClick={handleSignOutClick}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                onClick={() => {
+                  onSignOut?.();
+                  setShowUserMenu(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
               >
                 <LogOut className="h-4 w-4" />
-                Sign out
+                <span>Sign Out</span>
               </button>
             </div>
           )}
@@ -554,31 +527,6 @@ export default function TopNav({ onMenuClick, user, onSignOut }: TopNavProps) {
           onClick={() => setShowUserMenu(false)}
         />
       )}
-      </header>
-
-      {/* Sign Out Confirmation Dialog */}
-      <AlertDialog open={showSignOutConfirm} onOpenChange={setShowSignOutConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-500" />
-              <AlertDialogTitle>Confirm Sign Out</AlertDialogTitle>
-            </div>
-            <AlertDialogDescription className="pt-2">
-              Are you sure you want to sign out? You'll need to sign in again to access your account.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmSignOut}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
-            >
-              Sign Out
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </header>
   );
 } 

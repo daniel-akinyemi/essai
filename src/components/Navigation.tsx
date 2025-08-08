@@ -63,12 +63,16 @@ export default function Navigation() {
           </div>
 
           {/* Mobile Navigation - Menu button and Sign In */}
-          <div className="md:hidden flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:hidden">
             <Link 
               href="/auth/signin" 
-              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors whitespace-nowrap ${
+                session 
+                  ? 'text-gray-700 hover:text-blue-600 bg-transparent' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
-              Sign In
+              {session ? 'Dashboard' : 'Sign In'}
             </Link>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}

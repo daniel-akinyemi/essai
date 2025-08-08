@@ -23,41 +23,41 @@ export default function Navigation() {
   // Always show navigation on landing page, regardless of authentication status
 
   return (
-    <nav className={`fixed top-0 w-full z-50 backdrop-blur-lg bg-white/60 border-b border-gray-200 transition-all duration-300 ${
+    <nav className={`fixed top-0 w-full z-50 backdrop-blur-lg bg-white/95 border-b border-gray-200 transition-all duration-300 ${
       scrolled ? "shadow-md" : ""
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="text-xl font-bold flex-shrink-0">
+          <Link href="/" className="text-xl font-bold flex-shrink-0 text-gray-900 hover:text-blue-600 transition-colors">
             Essai
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/pricing" className="text-gray-700 hover:text-gray-900">
+            <Link href="/pricing" className="text-gray-700 hover:text-blue-600 transition-colors">
               Pricing
             </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-gray-900">
+            <Link href="/contact" className="text-gray-700 hover:text-blue-600 transition-colors">
               Contact
             </Link>
-            <Link href="/key" className="text-gray-700 hover:text-gray-900">
+            <Link href="/key" className="text-gray-700 hover:text-blue-600 transition-colors">
               API Key
             </Link>
             {!session ? (
-              <>
+              <div className="flex items-center space-x-4 ml-4">
                 <Link 
                   href="/auth/signin" 
-                  className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
                 >
                   Sign In
                 </Link>
                 <Link 
                   href="/auth/signup" 
-                  className="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                  className="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors text-sm font-medium"
                 >
                   Sign Up
                 </Link>
-              </>
+              </div>
             ) : (
               <div className="ml-4 text-sm text-gray-700">
                 Welcome, {session.user?.name || 'User'}
@@ -66,62 +66,87 @@ export default function Navigation() {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="md:hidden flex items-center space-x-2">
-            {!session ? (
-              <Link 
-                href="/auth/signin" 
-                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
-              >
-                Sign In
-              </Link>
-            ) : (
-              <div className="text-sm text-gray-700 mr-2">
-                {session.user?.name?.split(' ')[0] || 'User'}
-              </div>
-            )}
-            
+          <div className="md:hidden flex items-center">
             <div className="relative">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 text-gray-700 hover:text-gray-900 focus:outline-none"
+                className="p-2 text-gray-700 hover:text-blue-600 focus:outline-none transition-colors"
                 aria-expanded={isMenuOpen}
                 aria-haspopup="true"
+                aria-label="Toggle menu"
               >
-                <span className="sr-only">Open menu</span>
-                <Menu className="h-5 w-5" />
+                {isMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </button>
               
               {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                  <Link
-                    href="/pricing"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Pricing
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Contact
-                  </Link>
-                  <Link
-                    href="/key"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    API Key
-                  </Link>
-                  <div className="border-t border-gray-100 my-1"></div>
-                  <Link
-                    href="/auth/signup"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign Up
-                  </Link>
+                <div className="fixed inset-0 z-40 md:hidden" onClick={() => setIsMenuOpen(false)}>
+                  <div className="fixed inset-0 bg-black/25" aria-hidden="true" />
+                  <div className="fixed inset-y-0 right-0 max-w-xs w-full bg-white shadow-xl z-50 overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <div className="p-4 border-b border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <Link href="/" className="text-lg font-bold text-gray-900" onClick={() => setIsMenuOpen(false)}>
+                          Essai
+                        </Link>
+                        <button 
+                          onClick={() => setIsMenuOpen(false)}
+                          className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                          aria-label="Close menu"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                    <nav className="flex flex-col py-2">
+                      <Link
+                        href="/pricing"
+                        className="px-4 py-3 text-base font-medium text-gray-900 hover:bg-gray-50 flex items-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Pricing
+                      </Link>
+                      <Link
+                        href="/contact"
+                        className="px-4 py-3 text-base font-medium text-gray-900 hover:bg-gray-50 flex items-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Contact
+                      </Link>
+                      <Link
+                        href="/key"
+                        className="px-4 py-3 text-base font-medium text-gray-900 hover:bg-gray-50 flex items-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        API Key
+                      </Link>
+                      {!session ? (
+                        <>
+                          <div className="border-t border-gray-200 my-2"></div>
+                          <Link
+                            href="/auth/signin"
+                            className="px-4 py-3 text-base font-medium text-gray-900 hover:bg-gray-50 flex items-center"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Sign In
+                          </Link>
+                          <Link
+                            href="/auth/signup"
+                            className="mx-4 my-2 px-4 py-2 text-center text-base font-medium text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Sign Up
+                          </Link>
+                        </>
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-gray-500 border-t border-gray-200 mt-2">
+                          Signed in as {session.user?.email || 'User'}
+                        </div>
+                      )}
+                    </nav>
+                  </div>
                 </div>
               )}
             </div>

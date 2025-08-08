@@ -168,12 +168,12 @@ export default function TopNav({ onMenuClick, user, onSignOut }: TopNavProps) {
       <div className="flex items-center space-x-4">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 -ml-1 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="p-2 -ml-1 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           aria-label="Toggle menu"
         >
           <Menu className="h-6 w-6" />
         </button>
-        <div className="hidden lg:block">
+        <div className="hidden md:block">
           <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
         </div>
       </div>

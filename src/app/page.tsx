@@ -10,8 +10,10 @@ const HomeContent = dynamic(() => import('../components/HomeContent'), {
 
 export default function Home() {
   return (
-    <Suspense fallback={<LandingSkeleton />}>
-      <HomeContent />
-    </Suspense>
+    <div className="pt-16"> {/* Add padding-top to account for fixed navigation */}
+      <Suspense fallback={<LandingSkeleton />}>
+        <HomeContent />
+      </Suspense>
+    </div>
   );
 }

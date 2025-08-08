@@ -297,104 +297,111 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-3 sm:p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-3 mb-4 p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <Settings className="h-6 w-6 text-white" />
+        <div className="mb-6 sm:mb-8 text-center">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-3 mb-4 p-3 sm:p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg w-full max-w-md">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent truncate">
                 Settings
               </h1>
-              <p className="text-gray-600">Customize your writing experience</p>
+              <p className="text-sm sm:text-base text-gray-600 truncate">Customize your writing experience</p>
             </div>
           </div>
         </div>
 
-        {/* User Profile Picture and Info at Top (Unified) */}
-        {/* Modern User Profile Card */}
-        <div className="flex flex-col items-center mb-10">
+        {/* User Profile Card */}
+        <div className="flex flex-col items-center mb-6 sm:mb-10">
           <div className="w-full max-w-lg relative">
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 blur-xl opacity-60" style={{ zIndex: 0 }} />
-            <div className="relative z-10 p-8 rounded-3xl shadow-2xl flex items-center gap-6 bg-white/30 backdrop-blur-xl border border-white/30">
-              <div className="flex-shrink-0 w-20 h-20 bg-white/40 rounded-full flex items-center justify-center shadow-lg border-4 border-white/30">
+            <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 blur-xl opacity-60" style={{ zIndex: 0 }} />
+            <div className="relative z-10 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-white/30 backdrop-blur-xl border border-white/30">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/40 rounded-full flex items-center justify-center shadow-lg border-4 border-white/30 flex-shrink-0">
                 {session?.user?.name ? (
-                  <span className="text-4xl font-extrabold text-indigo-600">{session.user.name.charAt(0).toUpperCase()}</span>
+                  <span className="text-2xl sm:text-4xl font-extrabold text-indigo-600">
+                    {session.user.name.charAt(0).toUpperCase()}
+                  </span>
                 ) : (
-                  <User className="w-10 h-10 text-indigo-600" />
+                  <User className="w-8 h-8 sm:w-10 sm:h-10 text-indigo-600" />
                 )}
               </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold text-gray-900 drop-shadow-sm">{session?.user?.name || 'User'}</span>
-                <span className="text-base text-gray-700/80 mt-1">{session?.user?.email}</span>
+              <div className="text-center sm:text-left min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 drop-shadow-sm truncate">
+                  {session?.user?.name || 'User'}
+                </h2>
+                <p className="text-sm sm:text-base text-gray-700/80 mt-1 truncate">
+                  {session?.user?.email}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           {/* Left Column */}
           <div className="space-y-8">
             {/* Writing Preferences (now first) */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center justify-between gap-3">
-                <span className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-white" />
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6 md:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center gap-2 sm:gap-3">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
                   </div>
-                  Writing Preferences
-                </span>
+                  <span className="whitespace-nowrap">Writing Preferences</span>
+                </h2>
                 <button
                   onClick={saveWritingPreferences}
                   disabled={writingPreferencesSaving}
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow hover:from-green-600 hover:to-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow hover:from-green-600 hover:to-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {writingPreferencesSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   ) : (
-                    <Save className="h-4 w-4" />
+                    <Save className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
-                  Save
+                  <span>Save</span>
                 </button>
-              </h2>
+              </div>
               
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Writing Style
                   </label>
-                  <select
-                    value={localWritingStyle}
-                    onChange={(e) => setLocalWritingStyle(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
-                  >
-                    <option value="none">None</option>
-                    <option value="academic">Academic</option>
-                    <option value="creative">Creative</option>
-                    <option value="professional">Professional</option>
-                    <option value="casual">Casual</option>
-                  </select>
-                </div>
+                  <div className="relative">
+                    <select
+                      value={localWritingStyle}
+                      onChange={(e) => setLocalWritingStyle(e.target.value)}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm appearance-none pr-10"
+                    >
+                      <option value="none">None</option>
+                      <option value="academic">Academic</option>
+                      <option value="creative">Creative</option>
+                      <option value="professional">Professional</option>
+                      <option value="casual">Casual</option>
+                    </select>
+                  </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Preferred Essay Length
                   </label>
-                  <select
-                    value={localPreferredEssayLength}
-                    onChange={(e) => setLocalPreferredEssayLength(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm"
-                  >
-                    <option value="none">None</option>
-                    <option value="short">Short (300-500 words)</option>
-                    <option value="medium">Medium (500-800 words)</option>
-                    <option value="long">Long (800-1200 words)</option>
-                    <option value="extended">Extended (1200+ words)</option>
-                  </select>
-                </div>
+                  <div className="relative">
+                    <select
+                      value={localPreferredEssayLength}
+                      onChange={(e) => setLocalPreferredEssayLength(e.target.value)}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm appearance-none pr-10"
+                    >
+                      <option value="none">None</option>
+                      <option value="short">Short (300-500 words)</option>
+                      <option value="medium">Medium (500-800 words)</option>
+                      <option value="long">Long (800-1200 words)</option>
+                      <option value="extended">Extended (1200+ words)</option>
+                    </select>
+                  </div>
 
                 {/* Save Button and Status */}
                 {writingPreferencesMessage && (
@@ -627,8 +634,9 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
   );
-} 
+}

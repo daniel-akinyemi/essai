@@ -29,6 +29,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -587,12 +589,38 @@ export default function SettingsPage() {
         {/* Sign Out Button at Bottom */}
         <div className="mt-12 flex items-center justify-center">
           <button
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => setShowSignOutConfirm(true)}
             className="w-full max-w-xs bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             <LogOut className="h-4 w-4" />
             Sign Out
           </button>
+
+          {/* Sign Out Confirmation Dialog */}
+          {showSignOutConfirm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowSignOutConfirm(false)}>
+              <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-xl" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Sign Out</h3>
+                <p className="text-gray-600 mb-6">Are you sure you want to sign out? You'll need to log in again to access your account.</p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowSignOutConfirm(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Yes, Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

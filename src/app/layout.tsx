@@ -29,7 +29,9 @@ export default function RootLayout({
         <Providers>
           <ThemeLoader />
           <ConditionalNavigation />
-          {children}
+          <main className="pt-16">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

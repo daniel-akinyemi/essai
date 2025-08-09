@@ -36,8 +36,25 @@ export class OpenRouterClient {
     }
   }
 
-  async chatCompletion(messages: OpenRouterMessage[], model: string = 'deepseek/deepseek-r1'): Promise<string> {
+  async chatCompletion(messages: OpenRouterMessage[], model: string = 'mistralai/mistral-7b-instruct:free'): Promise<string> {
     try {
+      if (!model) {
+        throw new Error('Model is required');
+      }
+
+      console.log(`Sending request to model: ${model}`);
+      console.log('Messages:', JSON.stringify(messages, null, 2));
+
+      const requestBody = {
+        model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 4000,
+        stream: false,
+      };
+
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -46,30 +63,42 @@ export class OpenRouterClient {
           'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
           'X-Title': 'Essai - Essay Writing Assistant',
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.7,
-          max_tokens: 4000,
-          stream: false,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      const responseText = await response.text();
+      console.log('API Response status:', response.status);
+      console.log('API Response body:', responseText);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+        throw new Error(`OpenRouter API error (${response.status}): ${responseText}`);
       }
 
-      const data: OpenRouterResponse = await response.json();
+      let data: OpenRouterResponse;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Failed to parse API response: ${responseText}`);
+      }
       
       if (!data.choices || data.choices.length === 0) {
-        throw new Error('No response from OpenRouter API');
+        throw new Error('No choices in the API response');
+      }
+
+      if (!data.choices[0].message?.content) {
+        throw new Error('No content in the API response');
       }
 
       return data.choices[0].message.content;
     } catch (error) {
-      console.error('OpenRouter API error:', error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('OpenRouter API error:', {
+        error: errorMessage,
+        model,
+        messageCount: messages.length,
+        lastMessage: messages[messages.length - 1]?.content?.substring(0, 100) + '...'
+      });
+      throw new Error(`Failed to get completion: ${errorMessage}`);
     }
   }
 

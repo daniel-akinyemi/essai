@@ -39,6 +39,7 @@
     "lucide-react": "^0.525.0",
     "next": "15.4.5",
     "next-auth": "^4.24.11",
+    "node-fetch": "2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "request-ip": "^3.3.0",

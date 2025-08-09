@@ -92,6 +92,9 @@ dependencies:
   next-auth:
     specifier: ^4.24.11
     version: 4.24.11(next@15.4.5)(react-dom@18.3.1)(react@18.3.1)
+  node-fetch:
+    specifier: '2'
+    version: 2.7.0
   react:
     specifier: 18.3.1
     version: 18.3.1
@@ -4638,7 +4641,6 @@ packages:
         optional: true
     dependencies:
       whatwg-url: 5.0.0
-    dev: true
 
   /node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}

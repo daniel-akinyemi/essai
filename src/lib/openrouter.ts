@@ -42,9 +42,10 @@ export class OpenRouterClient {
         throw new Error('Model is required');
       }
 
-      console.log(`Sending request to model: ${model}`);
-      console.log('Messages:', JSON.stringify(messages, null, 2));
-
+      // Log request details
+      console.log(`[OpenRouter] Sending request to model: ${model}`);
+      console.log(`[OpenRouter] Base URL: ${this.baseUrl}`);
+      
       const requestBody = {
         model,
         messages,
@@ -53,52 +54,113 @@ export class OpenRouterClient {
         stream: false,
       };
 
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      console.log('[OpenRouter] Request body:', JSON.stringify({
+        ...requestBody,
+        messages: requestBody.messages.map(m => ({
+          ...m,
+          content: m.content.length > 200 ? m.content.substring(0, 200) + '...' : m.content
+        }))
+      }, null, 2));
 
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-          'X-Title': 'Essai - Essay Writing Assistant',
-        },
-        body: JSON.stringify(requestBody),
+      let response: Response;
+      let responseText: string;
+      
+      try {
+        // Add timeout to the fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+        response = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+            'X-Title': 'Essai - Essay Writing Assistant',
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        responseText = await response.text();
+      } catch (error) {
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            throw new Error('Request timed out after 30 seconds');
+          }
+          throw new Error(`Network error: ${error.message}`);
+        }
+        throw new Error('Unknown network error occurred');
+      }
+
+      console.log('[OpenRouter] Response status:', response.status);
+      
+      // Log response headers for debugging
+      const responseHeaders: {[key: string]: string} = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
       });
-
-      const responseText = await response.text();
-      console.log('API Response status:', response.status);
-      console.log('API Response body:', responseText);
-
+      console.log('[OpenRouter] Response headers:', JSON.stringify(responseHeaders, null, 2));
+      
       if (!response.ok) {
-        throw new Error(`OpenRouter API error (${response.status}): ${responseText}`);
+        let errorDetails = '';
+        try {
+          const errorData = JSON.parse(responseText);
+          errorDetails = errorData.error?.message || responseText;
+        } catch (e) {
+          errorDetails = responseText;
+        }
+        
+        console.error(`[OpenRouter] API error (${response.status}):`, errorDetails);
+        throw new Error(`API request failed with status ${response.status}: ${errorDetails}`);
       }
 
       let data: OpenRouterResponse;
       try {
         data = JSON.parse(responseText);
       } catch (e) {
-        throw new Error(`Failed to parse API response: ${responseText}`);
+        console.error('[OpenRouter] Failed to parse JSON response:', responseText);
+        throw new Error('Received invalid JSON response from the API');
       }
       
-      if (!data.choices || data.choices.length === 0) {
-        throw new Error('No choices in the API response');
+      if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+        console.error('[OpenRouter] No choices in response:', data);
+        throw new Error('No completion choices returned from the API');
       }
 
-      if (!data.choices[0].message?.content) {
+      const firstChoice = data.choices[0];
+      if (!firstChoice.message?.content) {
+        console.error('[OpenRouter] No content in response choice:', firstChoice);
         throw new Error('No content in the API response');
       }
 
-      return data.choices[0].message.content;
+      console.log('[OpenRouter] Successfully received response');
+      return firstChoice.message.content;
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('OpenRouter API error:', {
+      console.error('[OpenRouter] Error details:', {
         error: errorMessage,
         model,
         messageCount: messages.length,
-        lastMessage: messages[messages.length - 1]?.content?.substring(0, 100) + '...'
+        lastMessage: messages[messages.length - 1]?.content?.substring(0, 200) + (messages[messages.length - 1]?.content.length > 200 ? '...' : '')
       });
-      throw new Error(`Failed to get completion: ${errorMessage}`);
+      
+      // Provide more user-friendly error messages
+      if (errorMessage.includes('timed out')) {
+        throw new Error('The request took too long to complete. Please try again.');
+      } else if (errorMessage.includes('Network error')) {
+        throw new Error('Unable to connect to the AI service. Please check your internet connection and try again.');
+      } else if (errorMessage.includes('401')) {
+        throw new Error('Authentication failed. Please check your API key and try again.');
+      } else if (errorMessage.includes('rate limit')) {
+        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+      } else if (errorMessage.includes('model')) {
+        throw new Error('The selected AI model is currently unavailable. Please try a different model or try again later.');
+      }
+      
+      throw new Error(`AI service error: ${errorMessage}`);
     }
   }
 

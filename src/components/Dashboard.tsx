@@ -198,7 +198,7 @@ const App = () => {
               <Home className="h-10 w-10 text-white drop-shadow" />
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-1 drop-shadow">Welcome to Essai!</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-1 drop-shadow">Welcome to ESSAI!</h2>
               <p className="text-lg md:text-xl text-white/90 font-medium drop-shadow">
                 Your AI-powered platform for essay evaluation, improvement, and generation. Get instant feedback, track your progress, and create high-quality essays with ease.
               </p>
@@ -333,11 +333,11 @@ const App = () => {
                     <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full" />
                     <div className="flex-1 min-w-0">
                       <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-                      <div className="h-3 bg-gray-100 rounded w-1/3" />
+                          <div className="h-3 bg-gray-100 rounded w-1/3" />
                     </div>
                     <span className="inline-block px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-medium whitespace-nowrap h-5 w-16" />
-                </li>
-              ))}
+                  </li>
+                ))}
             </ul>
             ) : (
               <ul className="relative border-l-2 border-blue-100 pl-6 max-h-80 overflow-y-auto">

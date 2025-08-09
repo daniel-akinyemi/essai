@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/student/Sidebar';
-import TopNav from '@/components/student/TopNav';
 
 export default function DashboardLayout({
   children,
@@ -14,10 +14,21 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState('overview');
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   // Set mounted to true after component mounts
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Update active page when route changes
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.includes('generate')) setActivePage('essay-generator');
+    else if (path.includes('essays')) setActivePage('essay-history');
+    else if (path.includes('paragraph-analyzer')) setActivePage('paragraph-analyzer');
+    else if (path.includes('settings')) setActivePage('settings');
+    else setActivePage('overview');
   }, []);
 
   // Handle session loading state
@@ -31,48 +42,42 @@ export default function DashboardLayout({
 
   // If no session, redirect to sign-in
   if (!session) {
-    window.location.href = '/auth/signin';
+    if (typeof window !== 'undefined') {
+      router.push('/auth/signin');
+    }
     return null;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top Navigation */}
-      <TopNav 
-        onMenuClick={() => setSidebarOpen(!sidebarOpen)} 
-        user={session.user || undefined} 
-        onSignOut={() => signOut({ callbackUrl: '/' })}
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Mobile header */}
+      <header className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-40">
+        <button 
+          onClick={() => setSidebarOpen(true)}
+          className="p-2 rounded-md text-gray-500 hover:bg-gray-100"
+          aria-label="Open menu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+          </svg>
+        </button>
+        <h1 className="text-lg font-semibold text-gray-800">ESSAI</h1>
+        <div className="w-6"></div> {/* For alignment */}
+      </header>
+      
+      {/* Sidebar */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)}
+        activePage={activePage}
+        onPageChange={setActivePage}
       />
       
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Overlay for mobile when sidebar is open - Moved inside flex container */}
-        {sidebarOpen && (
-          <div 
-            className="lg:hidden fixed inset-0 bg-black/50 z-30"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-        
-        {/* Sidebar - Hidden on mobile, shown when sidebarOpen is true */}
-        <div 
-          className={`fixed inset-y-0 left-0 z-40 w-64 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0 transition-transform duration-300 ease-in-out bg-white lg:bg-transparent`}
-          style={{ willChange: 'transform' }}
-        >
-          <Sidebar
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-            activePage={activePage}
-            onPageChange={setActivePage}
-          />
-        </div>
-
-        {/* Main content area */}
-        <div className="flex-1 flex flex-col overflow-hidden relative z-10 bg-white">
-          {/* Page content */}
-          <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-            {children}
-          </div>
-        </div>
+      {/* Main content */}
+      <div className={`flex-1 flex flex-col overflow-hidden pt-16 lg:pt-0`}>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-50">
+          {children}
+        </main>
       </div>
     </div>
   );

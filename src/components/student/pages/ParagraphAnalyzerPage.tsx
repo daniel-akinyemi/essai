@@ -11,11 +11,53 @@ interface ParagraphAnalysis {
   paragraph: number;
   originalText: string;
   relevanceScore: number;
+  qualityScore: number;
   status: "✅ On-topic" | "🟡 Needs Improvement" | "❌ Off-topic" | "⚠️ Somewhat Off-topic";
+  issues: {
+    type: 'relevance' | 'grammar' | 'clarity' | 'vocabulary' | 'sentence-structure' | 'logic-flow' | 'repetition' | 'vague-language' | 'contradiction' | 'lack-of-detail' | 'transitions' | 'incomplete-idea';
+    description: string;
+    examples?: string[];
+  }[];
   feedback: string;
-  suggestion?: string;
+  suggestions: string[];
   improvedParagraph?: string | null;
+  vocabularyAnalysis?: {
+    weakWords: string[];
+    suggestedReplacements: string[];
+  };
+  sentenceVariety?: {
+    sentenceLengths: number[];
+    sentenceStructures: string[];
+    suggestions: string[];
+  };
+  suggestion?: string; // For backward compatibility
 }
+
+// Helper function to get issue icon based on type
+const getIssueIcon = (type: string) => {
+  switch(type) {
+    case 'grammar': return '🔠';
+    case 'vocabulary': return '📚';
+    case 'sentence-structure': return '🔄';
+    case 'repetition': return '🔄';
+    case 'vague-language': return '🔍';
+    case 'transitions': return '⏩';
+    case 'logic-flow': return '🔄';
+    case 'lack-of-detail': return '➕';
+    case 'incomplete-idea': return '❓';
+    case 'contradiction': return '⚠️';
+    case 'relevance': return '🎯';
+    case 'clarity': return '✨';
+    default: return 'ℹ️';
+  }
+};
+
+// Helper function to get score color
+const getScoreColor = (score: number) => {
+  if (score >= 80) return 'text-green-600';
+  if (score >= 50) return 'text-yellow-600';
+  return 'text-red-600';
+};
 
 export default function ParagraphAnalyzerPage() {
   const [topic, setTopic] = useState('');
@@ -24,10 +66,11 @@ export default function ParagraphAnalyzerPage() {
   const [error, setError] = useState('');
   const [paragraphAnalysis, setParagraphAnalysis] = useState<ParagraphAnalysis[]>([]);
   const [analyzingParagraphs, setAnalyzingParagraphs] = useState(false);
-  const [autoFix, setAutoFix] = useState(false);
+  const [isFixingParagraphs, setIsFixingParagraphs] = useState(false);
   const [fixedEssay, setFixedEssay] = useState<string>('');
   const [autoSaveMessage, setAutoSaveMessage] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [hasAnalysis, setHasAnalysis] = useState(false);
 
   const { data: session } = useSession();
 
@@ -114,16 +157,14 @@ export default function ParagraphAnalyzerPage() {
       const res = await fetch('/api/analyzeParagraphRelevance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, essay, autoFix })
+        body: JSON.stringify({ topic, essay, autoFix: false }) // Always set autoFix to false initially
       });
       
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to analyze paragraphs.');
       
       setParagraphAnalysis(data.relevanceReport);
-      if (data.fixedEssay) {
-        setFixedEssay(data.fixedEssay);
-      }
+      setHasAnalysis(true);
       // Automatically save analysis result to history
       const contentToSave = data.fixedEssay || essay;
       const feedbackSummary = data.relevanceReport.map((p: any) => p.feedback).join(' ');
@@ -143,6 +184,72 @@ export default function ParagraphAnalyzerPage() {
       setError(err.message || 'Failed to analyze paragraphs.');
     } finally {
       setAnalyzingParagraphs(false);
+    }
+  };
+
+  const handleAutoFixParagraphs = async () => {
+    if (!topic.trim() || !essay.trim() || paragraphAnalysis.length === 0) {
+      setError('Please analyze the essay first before fixing paragraphs.');
+      return;
+    }
+    
+    setIsFixingParagraphs(true);
+    setError('');
+    
+    try {
+      const res = await fetch('/api/analyzeParagraphRelevance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          topic, 
+          essay, 
+          autoFix: true, // Enable auto-fix for this request
+          existingAnalysis: paragraphAnalysis // Send existing analysis to avoid re-analyzing
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fix paragraphs.');
+      
+      if (data.fixedEssay) {
+        setFixedEssay(data.fixedEssay);
+      }
+      
+      // Update the analysis with the fixed paragraphs
+      if (data.relevanceReport) {
+        setParagraphAnalysis(data.relevanceReport);
+      }
+      
+      // Save the fixed essay
+      if (session?.user) {
+        const contentToSave = data.fixedEssay || essay;
+        const feedbackSummary = data.relevanceReport?.map((p: any) => p.feedback).join(' ') || '';
+        await saveToHistory(contentToSave, feedbackSummary);
+      }
+      
+    } catch (err: any) {
+      setError(err.message || 'Failed to fix paragraphs.');
+    } finally {
+      setIsFixingParagraphs(false);
+    }
+  };
+
+  const saveToHistory = async (content: string, feedback: string) => {
+    try {
+      await fetch('/api/essays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic,
+          content,
+          type: 'Paragraph Analysis',
+          score: 0,
+          feedback: feedback || 'Paragraph analysis feedback.'
+        })
+      });
+      setAutoSaveMessage('Analysis saved to your history.');
+    } catch (error) {
+      console.error('Failed to save to history:', error);
     }
   };
 
@@ -273,18 +380,25 @@ export default function ParagraphAnalyzerPage() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
-                <input
-                  type="checkbox"
-                  id="auto-fix"
-                  checked={autoFix}
-                  onChange={e => setAutoFix(e.target.checked)}
-                  className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 w-5 h-5"
-                />
-                <label htmlFor="auto-fix" className="text-sm font-semibold text-gray-700">
-                  Auto-fix problematic paragraphs
-                </label>
-              </div>
+              {hasAnalysis && paragraphAnalysis.some(p => p.status !== '✅ On-topic') && (
+                <button
+                  onClick={handleAutoFixParagraphs}
+                  disabled={isFixingParagraphs}
+                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-emerald-600 hover:to-teal-600 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  {isFixingParagraphs ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>Fixing Paragraphs...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-5 w-5" />
+                      <span>Fix Problematic Paragraphs</span>
+                    </>
+                  )}
+                </button>
+              )}
 
               {error && (
                 <div className="flex items-center space-x-3 p-4 bg-red-50 border border-red-200 rounded-xl">
@@ -385,16 +499,20 @@ export default function ParagraphAnalyzerPage() {
                         <p className="text-sm leading-relaxed">{paragraph.feedback}</p>
                       </div>
 
-                      {paragraph.suggestion && (
+                      {paragraph.suggestions && paragraph.suggestions.length > 0 && (
                         <div className="mb-4">
-                          <h5 className="font-semibold mb-2 text-gray-800">Suggestion:</h5>
-                          <p className="text-sm leading-relaxed">{paragraph.suggestion}</p>
+                          <h5 className="font-semibold mb-2 text-gray-800">Suggestions:</h5>
+                          <ul className="list-disc pl-5 space-y-1">
+                            {paragraph.suggestions.map((suggestion, idx) => (
+                              <li key={idx} className="text-sm text-gray-700">{suggestion}</li>
+                            ))}
+                          </ul>
                         </div>
                       )}
 
                       {paragraph.improvedParagraph && (
-                        <div>
-                          <h5 className="font-semibold mb-3 text-gray-800">Improved Version:</h5>
+                        <div className="mt-4">
+                          <h5 className="font-semibold mb-2 text-gray-800">Improved Version:</h5>
                           <div className="text-sm bg-white/50 p-4 rounded-xl border">
                             {paragraph.improvedParagraph}
                           </div>

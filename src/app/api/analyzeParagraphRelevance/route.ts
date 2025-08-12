@@ -28,16 +28,15 @@ interface ParagraphRelevanceRequest {
   topic: string;
   essay: string;
   autoFix?: boolean;
+  existingAnalysis?: any[]; // Array of paragraph analyses for context in auto-fix mode
 }
 
 interface ParagraphAnalysisV2 {
   paragraph: number;
   originalText: string;
-  relevance: number;
-  quality: number;
-  flaws: string[];
-  suggestions: string[];
-  classification: 'On-topic' | 'Needs Improvement' | 'Off-topic';
+  status: 'On-topic' | 'Needs Improvement' | 'Off-topic';
+  issues: string[];
+  suggestion: string;
 }
 
 interface Issue {
@@ -49,22 +48,11 @@ interface Issue {
 interface ParagraphAnalysis {
   paragraph: number;
   originalText: string;
-  relevanceScore: number;
-  qualityScore: number;
-  status: "✅ On-topic" | "🟡 Needs Improvement" | "❌ Off-topic" | "⚠️ Somewhat Off-topic";
+  status: "✅ On-topic" | "🟡 Needs Improvement" | "❌ Off-topic";
   issues: Issue[];
   feedback: string;
-  suggestions: string[];
+  suggestion: string;
   improvedParagraph?: string | null;
-  vocabularyAnalysis?: {
-    weakWords: string[];
-    suggestedReplacements: string[];
-  };
-  sentenceVariety?: {
-    sentenceLengths: number[];
-    sentenceStructures: string[];
-    suggestions: string[];
-  };
 }
 
 interface ParagraphRelevanceResponse {
@@ -72,54 +60,19 @@ interface ParagraphRelevanceResponse {
   fixedEssay?: string;
 }
 
-const UNIVERSAL_PROMPT = `You are a professional essay paragraph evaluator. Your job is to analyze each paragraph of an essay for BOTH topic relevance and writing quality.
+const UNIVERSAL_PROMPT = `You are a paragraph relevance analyzer. You will receive an essay split into paragraphs. Your job is to analyze each paragraph and return a JSON array.
 
-For each paragraph:
+For each paragraph, include:
+- "paragraph": paragraph number (starting from 1)
+- "status": must be exactly one of these: "On-topic", "Needs Improvement", or "Off-topic"
+- "feedback": short explanation of why the paragraph has that status
+- "suggestions": an array of short, practical tips for improvement
 
-1. RELEVANCE SCORING (0–100):
-   - 90–100: Fully on-topic, directly related to the essay topic, no irrelevant sentences.
-   - 70–89: Mostly on-topic but contains slightly unrelated or filler content.
-   - Below 70: Mostly or completely off-topic.
-
-2. QUALITY SCORING (0–100):
-   Evaluate based on:
-     - Grammar and sentence structure
-     - Vocabulary richness (avoid overuse of generic words like "good," "nice," "okay")
-     - Clarity and conciseness (no rambling, no unnecessary repetition)
-     - Sentence variety (mix of simple, compound, and complex)
-     - Logical flow and transitions
-     - Depth of detail and examples
-
-3. FLAW DETECTION:
-   Identify and list specific issues such as:
-     - Exact repeated words or phrases
-     - Contradictions or unclear comparisons
-     - Weak or vague language
-     - Poor transitions between ideas
-     - Lack of explanation or evidence
-
-4. IMPROVEMENT SUGGESTIONS:
-   Give clear, actionable ways to improve the paragraph while keeping its meaning.
-
-5. FINAL CLASSIFICATION:
-   - On-topic: Relevance ≥ 85 AND Quality ≥ 85
-   - Needs Improvement: Relevance ≥ 70 AND Quality < 85
-   - Off-topic: Relevance < 70
-
-OUTPUT FORMAT:
-Paragraph {number}:
-Relevance Score: {number}/100
-Quality Score: {number}/100
-Flaws: {list flaws here}
-Suggestions: {list improvements here}
-Classification: {On-topic / Needs Improvement / Off-topic}
-
-IMPORTANT INSTRUCTIONS:
-1. Return ONLY the analysis in the specified format, no additional text
-2. Ensure all text is properly formatted and escaped
-3. Be specific and actionable in feedback
-4. Highlight exact words/phrases that need improvement
-5. Provide concrete examples for suggested improvements`;
+Rules:
+- Always output ONLY a valid JSON array containing objects for each paragraph — no extra text, explanations, or formatting outside JSON.
+- If there are no issues, set "suggestions" to an empty array.
+- Be specific and actionable in your feedback.
+- Do NOT include any numeric scores, percentages, or ratings.`;
 
 function repairJsonString(jsonString: string): string {
   // First, normalize line endings and remove control characters
@@ -151,96 +104,175 @@ function repairJsonString(jsonString: string): string {
   return repaired;
 }
 
-function extractAndParseJson(response: string): any {
-  // Method 1: Try to extract complete JSON object and repair it
-  let jsonMatch = response.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    try {
-      const repairedJson = repairJsonString(jsonMatch[0]);
-      // console.log('Repaired JSON:', repairedJson);
-      return JSON.parse(repairedJson);
-    } catch (error) {
-      console.error('Failed to parse repaired JSON:', error);
-    }
-  }
+function extractAndParseJson(response: string, essayContent?: string): any {
+  // Split the essay into paragraphs for reference
+  const essayParagraphs = essayContent ? essayContent.split(/\n\s*\n/).filter(p => p.trim().length > 0) : [];
   
-  // Method 2: Try to extract just the relevanceReport array
-  const arrayMatch = response.match(/"relevanceReport":\s*(\[[\s\S]*?\])/);
-  if (arrayMatch) {
-    try {
-      const repairedArray = repairJsonString(arrayMatch[1]);
-      // console.log('Repaired array JSON:', repairedArray);
-      const relevanceReport = JSON.parse(repairedArray);
-      return { relevanceReport };
-    } catch (error) {
-      console.error('Failed to parse repaired array JSON:', error);
-    }
-  }
-  
-  // Method 3: Manual parsing as last resort
+  // Method 1: Try to parse the entire response as a JSON array
   try {
-    // Extract paragraph data manually using regex
-    const paragraphMatches = response.match(/"paragraph":\s*(\d+),\s*"originalText":\s*"([^"]*(?:\\.[^"]*)*)",\s*"relevanceScore":\s*(\d+),\s*"status":\s*"([^"]*(?:\\.[^"]*)*)",\s*"feedback":\s*"([^"]*(?:\\.[^"]*)*)"/g);
-    
-    if (paragraphMatches) {
-      const relevanceReport = paragraphMatches.map((match, index) => {
-        const paragraphMatch = match.match(/"paragraph":\s*(\d+)/);
-        const textMatch = match.match(/"originalText":\s*"([^"]*(?:\\.[^"]*)*)"/);
-        const scoreMatch = match.match(/"relevanceScore":\s*(\d+)/);
-        const statusMatch = match.match(/"status":\s*"([^"]*(?:\\.[^"]*)*)"/);
-        const feedbackMatch = match.match(/"feedback":\s*"([^"]*(?:\\.[^"]*)*)"/);
-        
-        // Extract issues from the issues section
-        const issues: { type: 'relevance'|'grammar'|'clarity'|'vocabulary'|'sentence-structure'|'logic-flow'|'repetition'|'vague-language'|'contradiction'|'lack-of-detail'|'transitions'|'incomplete-idea'; description: string; examples: string[] }[] = [];
-        const issuesMatch = response.match(/## Issues\n([\s\S]*?)(?=## |$)/i);
-        if (issuesMatch) {
-          const issuesContent = issuesMatch[1];
-          const issueMatches = [...issuesContent.matchAll(/- \*\*(.*?):\*\* ([^\n]*)/g)];
-          
-          for (const match of issueMatches) {
-            const issueType = match[1].toLowerCase().replace(/\s+/g, '-') as 'relevance'|'grammar'|'clarity'|'vocabulary'|'sentence-structure'|'logic-flow'|'repetition'|'vague-language'|'contradiction'|'lack-of-detail'|'transitions'|'incomplete-idea';
-            const description = match[2].trim();
-            
-            // Find examples for this issue
-            const exampleMatch = issuesContent.match(
-              new RegExp(`- \*\*${match[1]}:\*\*[^\n]*\n([\s\S]*?)(?=\n- \*\*|$)`, 'i')
-            );
-            
-            const examples = exampleMatch && exampleMatch[1] 
-              ? exampleMatch[1].trim().split('\n').map(line => line.replace(/^\s*[-•]\s*/, '').trim())
-              : [];
-            
-            // Only add if it's a valid issue type
-            const validIssueTypes = ['relevance', 'grammar', 'clarity', 'vocabulary', 'sentence-structure', 'logic-flow', 'repetition', 'vague-language', 'contradiction', 'lack-of-detail', 'transitions', 'incomplete-idea'];
-            if (validIssueTypes.includes(issueType)) {
-              issues.push({
-                type: issueType,
-                description,
-                examples: examples.filter(ex => ex.length > 0)
-              });
-            }
-          }
-        }
+    const parsed = JSON.parse(response);
+    if (Array.isArray(parsed)) {
+      // Transform the array of paragraph analyses to match our expected format
+      const relevanceReport = parsed.map((item: any, index: number) => {
+        // Get the original text from the essay content if available, otherwise use the response
+        const originalText = essayParagraphs[index] || 
+          (typeof item.paragraph === 'string' ? item.paragraph : 
+           typeof item.text === 'string' ? item.text : 
+           `Paragraph ${index + 1}`);
         
         return {
-          paragraph: parseInt(paragraphMatch?.[1] || (index + 1).toString()),
-          originalText: (textMatch?.[1] || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
-          relevanceScore: parseInt(scoreMatch?.[1] || '75'),
-          status: statusMatch?.[1] || '🟡 Needs Improvement',
-          issues,
-          feedback: (feedbackMatch?.[1] || '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
-          suggestion: null,
+          paragraph: index + 1,
+          originalText: originalText.trim(),
+          status: getStatusEmoji(item.status || 'Needs Improvement'),
+          issues: (Array.isArray(item.issues) ? item.issues : []).map((issue: any) => ({
+            type: getIssueType(String(issue).toLowerCase()),
+            description: String(issue),
+            examples: []
+          })),
+          feedback: item.feedback ? String(item.feedback) : '',
+          suggestion: Array.isArray(item.suggestions) && item.suggestions.length > 0 
+            ? String(item.suggestions[0])
+            : '',
           improvedParagraph: null
         };
       });
+      return { relevanceReport };
+    }
+  } catch (error) {
+    console.error('Failed to parse as JSON array:', error);
+  }
+
+  // Method 2: Try to extract a JSON array from the response
+  const arrayMatch = response.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+  if (arrayMatch) {
+    try {
+      const parsedArray = JSON.parse(arrayMatch[0]);
+      if (Array.isArray(parsedArray)) {
+        // Get the original paragraphs from the parsed array
+        const originalParagraphs = parsedArray.map((p: any) => {
+          const text = p.originalText || p.text || p.paragraph || '';
+          return typeof text === 'string' ? text.trim() : String(text).trim();
+        });
+
+        const relevanceReport = parsedArray.map((item: any, index: number) => ({
+          paragraph: index + 1,
+          originalText: originalParagraphs[index] || `Paragraph ${index + 1}`,
+          status: getStatusEmoji(item.status || 'Needs Improvement'),
+          issues: (Array.isArray(item.issues) ? item.issues : []).map((issue: any) => ({
+            type: getIssueType(String(issue).toLowerCase()),
+            description: String(issue),
+            examples: []
+          })),
+          feedback: item.feedback ? String(item.feedback) : '',
+          suggestion: Array.isArray(item.suggestions) && item.suggestions.length > 0 
+            ? String(item.suggestions[0])
+            : '',
+          improvedParagraph: null
+        }));
+        return { relevanceReport };
+      }
+    } catch (error) {
+      console.error('Failed to parse extracted JSON array:', error);
+    }
+  }
+  
+  // Method 3: Fallback to manual parsing if JSON parsing fails
+  try {
+    const paragraphSections = response.split(/\n\s*\n/);
+    const relevanceReport = [];
+    
+    for (let i = 0; i < paragraphSections.length; i++) {
+      const section = paragraphSections[i].trim();
+      if (!section) continue;
       
+      // Try to extract status from the section
+      let status = 'Needs Improvement';
+      if (section.includes('On-topic')) status = 'On-topic';
+      else if (section.includes('Off-topic')) status = 'Off-topic';
+      
+      // Extract issues and suggestions
+      const issues: string[] = [];
+      let suggestion = '';
+      
+      // Look for issues list
+      const issuesMatch = section.match(/Issues:[\s\n]+([\s\S]*?)(?=\n\w|$)/i);
+      if (issuesMatch) {
+        issues.push(...issuesMatch[1].split('\n').filter(Boolean).map(s => s.trim().replace(/^[-•*]\s*/, '')));
+      }
+      
+      // Look for suggestion
+      const suggestionMatch = section.match(/Suggestion:[\s\n]+([^\n]+)/i);
+      if (suggestionMatch) {
+        suggestion = suggestionMatch[1].trim();
+      }
+      
+      // Extract the paragraph text (first line that's not a heading or list item)
+      const paragraphMatch = section.match(/^([^\n\-•*:]+)\n/);
+      const paragraphText = paragraphMatch ? paragraphMatch[1].trim() : section.split('\n')[0].trim();
+      
+      relevanceReport.push({
+        paragraph: i + 1,
+        originalText: paragraphText,
+        status: getStatusEmoji(status),
+        issues: issues.map(issue => ({
+          type: getIssueType(issue.toLowerCase()),
+          description: issue,
+          examples: []
+        })),
+        feedback: suggestion,
+        suggestion,
+        improvedParagraph: null
+      });
+    }
+    
+    if (relevanceReport.length > 0) {
       return { relevanceReport };
     }
   } catch (error) {
     console.error('Failed manual parsing:', error);
   }
   
-  return null;
+  // If all else fails, return a single entry with the entire response as an error
+  return {
+    relevanceReport: [{
+      paragraph: 1,
+      originalText: 'Failed to parse analysis. Please try again.',
+      status: '❌ Error',
+      issues: [],
+      feedback: 'There was an error processing your request. The response format was not recognized.',
+      suggestion: 'Please try again or contact support if the issue persists.',
+      improvedParagraph: null
+    }]
+  };
+}
+
+// Helper function to get status with emoji
+function getStatusEmoji(status: string): string {
+  const statusMap: Record<string, string> = {
+    'on-topic': '✅ On-topic',
+    'needs improvement': '🟡 Needs Improvement',
+    'off-topic': '❌ Off-topic',
+    'error': '❌ Error'
+  };
+  
+  const normalizedStatus = status.toLowerCase().trim();
+  return statusMap[normalizedStatus] || '🟡 Needs Improvement';
+}
+
+// Helper function to map issue text to issue type
+function getIssueType(issueText: string): IssueType {
+  if (issueText.includes('grammar')) return 'grammar';
+  if (issueText.includes('clarity') || issueText.includes('unclear')) return 'clarity';
+  if (issueText.includes('vocab') || issueText.includes('word choice')) return 'vocabulary';
+  if (issueText.includes('sentence') || issueText.includes('structure')) return 'sentence-structure';
+  if (issueText.includes('logic') || issueText.includes('flow')) return 'logic-flow';
+  if (issueText.includes('repeat') || issueText.includes('repetition')) return 'repetition';
+  if (issueText.includes('vague') || issueText.includes('unclear')) return 'vague-language';
+  if (issueText.includes('contradict') || issueText.includes('inconsist')) return 'contradiction';
+  if (issueText.includes('detail') || issueText.includes('evidence')) return 'lack-of-detail';
+  if (issueText.includes('transition')) return 'transitions';
+  if (issueText.includes('incomplete') || issueText.includes('unfinished')) return 'incomplete-idea';
+  return 'clarity'; // Default to clarity for unknown issue types
 }
 
 function formatFixedEssay(essay: string): string {
@@ -333,16 +365,47 @@ export async function POST(request: NextRequest) {
 Essay:
 ${essay}
 
-${autoFix ? `When providing Auto-Fix:
-1. Each improved paragraph must end with exactly one blank line for separation
-2. Preserve the original paragraph count and structure
-3. Use appropriate transition words (e.g., "Furthermore,", "In addition,", "Moreover")
-4. For each paragraph, provide:
-   - A relevance score (0-100)
-   - Status: "✅ On-topic", "🟡 Needs Improvement", or "❌ Off-topic"
-   - Specific feedback on issues (relevance, clarity, coherence, grammar)
-   - A revised version of the paragraph if improvements are needed
-5. Ensure the final output is valid JSON with proper escaping` : ''}`;
+${autoFix ? `I need you to analyze and improve this essay while maintaining its original paragraph structure. For each paragraph, provide:
+1. A revised version that improves clarity, relevance, and quality
+2. A status: "On-topic" (if the paragraph is relevant and well-written), "Needs Improvement" (if it needs minor adjustments), or "Off-topic" (if it doesn't fit the topic)
+3. A brief explanation of the changes made
+4. Specific suggestions for further improvement (if any)
+
+IMPORTANT: Return ONLY a valid JSON array where each object has these exact fields:
+- paragraph: number (starting from 1)
+- originalText: string (the original paragraph text)
+- status: string (one of: "On-topic", "Needs Improvement", "Off-topic")
+- feedback: string (explanation of the analysis)
+- suggestions: string[] (specific improvement suggestions)
+- improvedParagraph: string (the enhanced version of the paragraph)
+
+Example:
+[
+  {
+    "paragraph": 1,
+    "originalText": "Exercise is good for health.",
+    "status": "Needs Improvement",
+    "feedback": "The point is valid but could be more specific and detailed.",
+    "suggestions": ["Add specific health benefits", "Include examples of exercises"],
+    "improvedParagraph": "Regular exercise provides numerous health benefits, including improved cardiovascular health, stronger muscles, and better mental well-being. Activities like walking, swimming, or cycling for 30 minutes daily can significantly enhance overall health."
+  }
+]` : `Please analyze each paragraph of the essay and return a JSON array where each object has these fields:
+- paragraph: number (starting from 1)
+- originalText: string
+- status: "On-topic" | "Needs Improvement" | "Off-topic"
+- feedback: string (explanation of the analysis)
+- suggestions: string[] (specific improvement suggestions)
+
+Example:
+[
+  {
+    "paragraph": 1,
+    "originalText": "Exercise is good for health.",
+    "status": "Needs Improvement",
+    "feedback": "The point is valid but could be more specific.",
+    "suggestions": ["Add specific health benefits", "Include examples of exercises"]
+  }
+]`}`;
 
     // Prepare the chat completion request
     console.log(`[AnalyzeParagraphRelevance] Sending request to OpenRouter (autoFix: ${autoFix})`);
@@ -378,8 +441,8 @@ ${autoFix ? `When providing Auto-Fix:
         .replace(/\r/g, '\n') // Normalize line endings
         .trim();
       
-      // Try to extract complete JSON object
-      analysisResult = extractAndParseJson(cleanedResponse);
+      // Try to extract complete JSON object, passing the original essay content for reference
+      analysisResult = extractAndParseJson(cleanedResponse, essay);
       
       if (!analysisResult) {
         console.error('[AnalyzeParagraphRelevance] Failed to parse AI response as JSON');
@@ -390,8 +453,6 @@ ${autoFix ? `When providing Auto-Fix:
         const fallbackReport = paragraphs.map((paragraph, index): ParagraphAnalysis => ({
           paragraph: index + 1,
           originalText: paragraph.trim(),
-          relevanceScore: 75, // Default score
-          qualityScore: 60, // Default quality score
           status: "🟡 Needs Improvement" as const,
           issues: [{
             type: 'clarity',
@@ -399,7 +460,7 @@ ${autoFix ? `When providing Auto-Fix:
             examples: []
           }],
           feedback: "Unable to analyze due to parsing error. The AI response format was unexpected.",
-          suggestions: ["Please try again or check the input format."],
+          suggestion: "Please try again or check the input format.",
           improvedParagraph: autoFix ? paragraph.trim() : null
         }));
         
@@ -416,8 +477,6 @@ ${autoFix ? `When providing Auto-Fix:
       const fallbackReport = paragraphs.map((paragraph, index): ParagraphAnalysis => ({
         paragraph: index + 1,
         originalText: paragraph.trim(),
-        relevanceScore: 0,
-        qualityScore: 50,
         status: "❌ Off-topic" as const,
         issues: [{
           type: 'relevance',
@@ -425,7 +484,7 @@ ${autoFix ? `When providing Auto-Fix:
           examples: []
         }],
         feedback: "An error occurred while analyzing this paragraph. Please try again.",
-        suggestions: ["Check your input and try again. If the problem persists, contact support."],
+        suggestion: "Check your input and try again. If the problem persists, contact support.",
         improvedParagraph: null
       }));
       
@@ -448,46 +507,25 @@ ${autoFix ? `When providing Auto-Fix:
     
     // Validate each paragraph analysis
     const validatedReport = analysisResult.relevanceReport.map((analysis, index) => {
-      // Ensure issues is an array
-      const issues = Array.isArray(analysis.issues) ? analysis.issues.map(issue => ({
-        type: typeof issue.type === 'string' ? issue.type : 'other',
-        description: typeof issue.description === 'string' ? issue.description : 'Issue found',
-        examples: Array.isArray(issue.examples) ? issue.examples.filter(e => typeof e === 'string') : []
-      })) : [];
-
-      // Ensure suggestions is an array
-      const suggestions = Array.isArray(analysis.suggestions) 
-        ? analysis.suggestions.filter(s => typeof s === 'string')
+      // Ensure issues is an array of valid Issue objects
+      const issues = Array.isArray(analysis.issues) 
+        ? analysis.issues
+            .filter(issue => issue && typeof issue === 'object' && 'type' in issue && 'description' in issue)
+            .map(issue => ({
+              type: isIssueType(issue.type) ? issue.type : 'clarity',
+              description: typeof issue.description === 'string' 
+                ? issue.description 
+                : 'Issue found',
+              examples: Array.isArray(issue.examples) 
+                ? issue.examples.filter(e => typeof e === 'string') 
+                : []
+            }))
         : [];
 
-      // Handle vocabulary analysis
-      const vocabularyAnalysis = analysis.vocabularyAnalysis && 
-        typeof analysis.vocabularyAnalysis === 'object' 
-        ? {
-            weakWords: Array.isArray(analysis.vocabularyAnalysis.weakWords) 
-              ? analysis.vocabularyAnalysis.weakWords.filter(w => typeof w === 'string')
-              : [],
-            suggestedReplacements: Array.isArray(analysis.vocabularyAnalysis.suggestedReplacements)
-              ? analysis.vocabularyAnalysis.suggestedReplacements.filter(w => typeof w === 'string')
-              : []
-          }
-        : undefined;
-
-      // Handle sentence variety analysis
-      const sentenceVariety = analysis.sentenceVariety && 
-        typeof analysis.sentenceVariety === 'object'
-        ? {
-            sentenceLengths: Array.isArray(analysis.sentenceVariety.sentenceLengths)
-              ? analysis.sentenceVariety.sentenceLengths.filter(n => typeof n === 'number')
-              : [],
-            sentenceStructures: Array.isArray(analysis.sentenceVariety.sentenceStructures)
-              ? analysis.sentenceVariety.sentenceStructures.filter(s => typeof s === 'string')
-              : [],
-            suggestions: Array.isArray(analysis.sentenceVariety.suggestions)
-              ? analysis.sentenceVariety.suggestions.filter(s => typeof s === 'string')
-              : []
-          }
-        : undefined;
+      // Ensure we have a valid suggestion
+      const suggestion = typeof analysis.suggestion === 'string' 
+        ? analysis.suggestion 
+        : '';
 
       // Create a safe copy with defaults
       const safeAnalysis: ParagraphAnalysis = {
@@ -495,43 +533,17 @@ ${autoFix ? `When providing Auto-Fix:
         originalText: typeof analysis.originalText === 'string' && analysis.originalText.trim() 
           ? analysis.originalText.trim() 
           : 'No content provided',
-        relevanceScore: typeof analysis.relevanceScore === 'number' 
-          ? Math.max(0, Math.min(100, analysis.relevanceScore)) // Clamp to 0-100
-          : 75, // Default score
-        qualityScore: typeof analysis.qualityScore === 'number'
-          ? Math.max(0, Math.min(100, analysis.qualityScore)) // Clamp to 0-100
-          : 75, // Default score
-        status: ['✅ On-topic', '🟡 Needs Improvement', '❌ Off-topic', '⚠️ Somewhat Off-topic'].includes(analysis.status)
-          ? analysis.status as '✅ On-topic' | '🟡 Needs Improvement' | '❌ Off-topic' | '⚠️ Somewhat Off-topic'
-          : analysis.relevanceScore >= 80 ? '✅ On-topic' : 
-            analysis.relevanceScore >= 40 ? '🟡 Needs Improvement' : '❌ Off-topic',
-        issues: Array.isArray(analysis.issues) 
-          ? analysis.issues
-              .filter((issue): issue is Issue => 
-                issue && 
-                typeof issue === 'object' && 
-                'type' in issue && 
-                'description' in issue &&
-                isIssueType(issue.type) &&
-                typeof issue.description === 'string'
-              )
-              .map(issue => ({
-                type: issue.type,
-                description: issue.description,
-                examples: Array.isArray(issue.examples) 
-                  ? issue.examples.filter((e): e is string => typeof e === 'string')
-                  : []
-              }))
-          : [],
+        status: ['✅ On-topic', '🟡 Needs Improvement', '❌ Off-topic'].includes(analysis.status)
+          ? analysis.status as '✅ On-topic' | '🟡 Needs Improvement' | '❌ Off-topic'
+          : '🟡 Needs Improvement',
+        issues: issues,
         feedback: typeof analysis.feedback === 'string' && analysis.feedback.trim()
           ? analysis.feedback.trim()
           : 'No feedback provided.',
-        suggestions,
+        suggestion: suggestion,
         improvedParagraph: (autoFix && typeof analysis.improvedParagraph === 'string' && analysis.improvedParagraph.trim())
           ? analysis.improvedParagraph.trim()
-          : null,
-        ...(vocabularyAnalysis && { vocabularyAnalysis }),
-        ...(sentenceVariety && { sentenceVariety })
+          : null
       };
       
       return safeAnalysis;
@@ -540,21 +552,43 @@ ${autoFix ? `When providing Auto-Fix:
     // Update the analysis result with validated data
     analysisResult.relevanceReport = validatedReport;
 
-    // Format the fixed essay if it exists
-    if (analysisResult.fixedEssay) {
+    // Generate fixed essay from improved paragraphs if in auto-fix mode
+    if (autoFix) {
       try {
-        console.log('[AnalyzeParagraphRelevance] Formatting fixed essay');
-        analysisResult.fixedEssay = formatFixedEssay(analysisResult.fixedEssay)
-          .replace(/\n{3,}/g, '\n\n'); // Ensure no more than two newlines between paragraphs
+        console.log('[AnalyzeParagraphRelevance] Generating fixed essay from improved paragraphs');
         
-        // Fallback: if still only one paragraph, split into paragraphs by sentences
-        if (!analysisResult.fixedEssay.includes('\n\n')) {
-          console.log('[AnalyzeParagraphRelevance] Using fallback paragraph splitting');
-          analysisResult.fixedEssay = fallbackParagraphSplit(analysisResult.fixedEssay);
-          analysisResult.fixedEssay = formatFixedEssay(analysisResult.fixedEssay);
+        // Sort paragraphs by their original order
+        const sortedParagraphs = [...analysisResult.relevanceReport]
+          .sort((a, b) => a.paragraph - b.paragraph);
+        
+        // Combine improved paragraphs into a single essay
+        const fixedEssay = sortedParagraphs
+          .map(p => p.improvedParagraph || p.originalText)
+          .filter(Boolean)
+          .join('\n\n');
+        
+        if (fixedEssay) {
+          console.log('[AnalyzeParagraphRelevance] Generated fixed essay with', 
+            fixedEssay.split('\n\n').length, 'paragraphs');
+          
+          // Format the fixed essay
+          analysisResult.fixedEssay = formatFixedEssay(fixedEssay)
+            .replace(/\n{3,}/g, '\n\n');
+            
+          // Fallback: if still only one paragraph, split into paragraphs by sentences
+          if (!analysisResult.fixedEssay.includes('\n\n')) {
+            console.log('[AnalyzeParagraphRelevance] Using fallback paragraph splitting');
+            analysisResult.fixedEssay = fallbackParagraphSplit(analysisResult.fixedEssay);
+            analysisResult.fixedEssay = formatFixedEssay(analysisResult.fixedEssay);
+          }
+          
+          console.log('[AnalyzeParagraphRelevance] Final fixed essay length:', 
+            analysisResult.fixedEssay.length);
+        } else {
+          console.warn('[AnalyzeParagraphRelevance] No content available for fixed essay');
         }
       } catch (formatError) {
-        console.error('[AnalyzeParagraphRelevance] Error formatting fixed essay:', formatError);
+        console.error('[AnalyzeParagraphRelevance] Error generating fixed essay:', formatError);
         // If formatting fails, return the original essay
         analysisResult.fixedEssay = essay;
       }

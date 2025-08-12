@@ -10,8 +10,6 @@ import jsPDF from 'jspdf';
 interface ParagraphAnalysis {
   paragraph: number;
   originalText: string;
-  relevanceScore: number;
-  qualityScore: number;
   status: "✅ On-topic" | "🟡 Needs Improvement" | "❌ Off-topic" | "⚠️ Somewhat Off-topic";
   issues: {
     type: 'relevance' | 'grammar' | 'clarity' | 'vocabulary' | 'sentence-structure' | 'logic-flow' | 'repetition' | 'vague-language' | 'contradiction' | 'lack-of-detail' | 'transitions' | 'incomplete-idea';
@@ -50,13 +48,6 @@ const getIssueIcon = (type: string) => {
     case 'clarity': return '✨';
     default: return 'ℹ️';
   }
-};
-
-// Helper function to get score color
-const getScoreColor = (score: number) => {
-  if (score >= 80) return 'text-green-600';
-  if (score >= 50) return 'text-yellow-600';
-  return 'text-red-600';
 };
 
 export default function ParagraphAnalyzerPage() {
@@ -211,24 +202,45 @@ export default function ParagraphAnalyzerPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fix paragraphs.');
       
+      // Update the fixed essay first
       if (data.fixedEssay) {
         setFixedEssay(data.fixedEssay);
       }
       
       // Update the analysis with the fixed paragraphs
-      if (data.relevanceReport) {
-        setParagraphAnalysis(data.relevanceReport);
+      if (data.relevanceReport && Array.isArray(data.relevanceReport)) {
+        // Ensure all paragraphs have the improvedParagraph field
+        const updatedAnalysis = data.relevanceReport.map((p: any, index: number) => ({
+          ...p,
+          // Keep the original text from the current analysis if available
+          originalText: paragraphAnalysis[index]?.originalText || p.originalText || '',
+          // Use the improved paragraph if available, otherwise keep the original
+          improvedParagraph: p.improvedParagraph || p.originalText || ''
+        }));
+        setParagraphAnalysis(updatedAnalysis);
       }
       
-      // Save the fixed essay
+      // Save the fixed essay to history if user is logged in
       if (session?.user) {
         const contentToSave = data.fixedEssay || essay;
-        const feedbackSummary = data.relevanceReport?.map((p: any) => p.feedback).join(' ') || '';
+        const feedbackSummary = data.relevanceReport?.map((p: any) => 
+          p.feedback || p.suggestion || ''
+        ).filter(Boolean).join(' ') || 'Paragraph analysis feedback.';
+        
         await saveToHistory(contentToSave, feedbackSummary);
       }
       
+      // Scroll to the fixed essay section
+      setTimeout(() => {
+        const fixedEssaySection = document.getElementById('fixed-essay-section');
+        if (fixedEssaySection) {
+          fixedEssaySection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+      
     } catch (err: any) {
-      setError(err.message || 'Failed to fix paragraphs.');
+      console.error('Error fixing paragraphs:', err);
+      setError(err.message || 'Failed to fix paragraphs. Please try again.');
     } finally {
       setIsFixingParagraphs(false);
     }
@@ -480,9 +492,6 @@ export default function ParagraphAnalyzerPage() {
                         <div className="flex items-center space-x-3">
                           {getStatusIcon(paragraph.status)}
                           <h4 className="font-bold text-lg">Paragraph {paragraph.paragraph}</h4>
-                          <span className="text-sm font-semibold bg-white/50 px-3 py-1 rounded-full">
-                            Score: {paragraph.relevanceScore}/100
-                          </span>
                         </div>
                         <span className="text-sm font-semibold">{paragraph.status}</span>
                       </div>

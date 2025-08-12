@@ -43,42 +43,38 @@ export default function Navigation() {
             <Link href="/key" className="text-gray-700 hover:text-gray-900">
               API Key
             </Link>
-            {!session ? (
-              <>
-                <Link 
-                  href="/auth/signin" 
-                  className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link 
-                  href="/auth/signup" 
-                  className="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                >
-                  Sign Up
-                </Link>
-              </>
-            ) : (
-              <div className="ml-4 text-sm text-gray-700">
-                Welcome, {session.user?.name || 'User'}
-              </div>
-            )}
+            <div className="flex items-center space-x-4">
+              <Link 
+                href="/auth/signin" 
+                className="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors whitespace-nowrap"
+              >
+                Sign In
+              </Link>
+              <Link 
+                href="/auth/signup" 
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+              >
+                Sign Up
+              </Link>
+            </div>
           </div>
 
           {/* Mobile Navigation */}
           <div className="md:hidden flex items-center space-x-2">
-            {!session ? (
+            <div className="flex items-center space-x-2">
               <Link 
                 href="/auth/signin" 
                 className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
               >
                 Sign In
               </Link>
-            ) : (
-              <div className="text-sm text-gray-700 mr-2">
-                {session.user?.name?.split(' ')[0] || 'User'}
-              </div>
-            )}
+              <Link 
+                href="/auth/signup" 
+                className="px-3 py-1.5 text-sm bg-white text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 transition-colors whitespace-nowrap"
+              >
+                Sign Up
+              </Link>
+            </div>
             
             <div className="relative">
               <button

@@ -359,25 +359,35 @@ export async function POST(request: NextRequest) {
     
     console.log(`[AnalyzeParagraphRelevance] Input validated. Topic length: ${topic.length}, Essay length: ${essay.length}`);
 
-    // Prepare the prompt with clear instructions
+    // First, split the essay into paragraphs for accurate mapping
+    const paragraphs = essay.split('\n\n').filter(p => p.trim().length > 0);
+    
+    // Prepare the prompt with clear instructions and paragraph mapping
     const userPrompt = `Essay Topic: ${topic}
 
-Essay:
-${essay}
+Essay (with paragraph numbers):
+${paragraphs.map((p, i) => `[Paragraph ${i + 1}]\n${p}`).join('\n\n')}
 
-${autoFix ? `I need you to analyze and improve this essay while maintaining its original paragraph structure. For each paragraph, provide:
-1. A revised version that improves clarity, relevance, and quality
-2. A status: "On-topic" (if the paragraph is relevant and well-written), "Needs Improvement" (if it needs minor adjustments), or "Off-topic" (if it doesn't fit the topic)
-3. A brief explanation of the changes made
-4. Specific suggestions for further improvement (if any)
+${autoFix ? `Analyze and improve this essay while maintaining its original paragraph structure. For EACH paragraph:
 
-IMPORTANT: Return ONLY a valid JSON array where each object has these exact fields:
-- paragraph: number (starting from 1)
-- originalText: string (the original paragraph text)
-- status: string (one of: "On-topic", "Needs Improvement", "Off-topic")
-- feedback: string (explanation of the analysis)
-- suggestions: string[] (specific improvement suggestions)
-- improvedParagraph: string (the enhanced version of the paragraph)
+1. Carefully read and understand the paragraph text
+2. Determine if it is relevant to the topic "${topic}"
+3. If relevant, improve its clarity and quality
+4. If not relevant, mark it as off-topic
+
+For EACH paragraph, return a JSON object with these exact fields:
+- paragraph: number (from the [Paragraph X] marker)
+- originalText: string (the exact original text)
+- status: "On-topic" (directly relevant), "Needs Improvement" (relevant but needs work), or "Off-topic" (not relevant)
+- feedback: 1-2 sentences explaining your analysis
+- suggestions: array of specific improvement suggestions (empty if none)
+- improvedParagraph: the enhanced version (or original if no improvements needed)
+
+CRITICAL RULES:
+1. The output MUST be a valid JSON array with one object per paragraph
+2. The order of paragraphs MUST be preserved exactly as in the original
+3. The originalText MUST match the input text exactly
+4. For off-topic paragraphs, set improvedParagraph to an empty string
 
 Example:
 [
@@ -441,8 +451,48 @@ Example:
         .replace(/\r/g, '\n') // Normalize line endings
         .trim();
       
-      // Try to extract complete JSON object, passing the original essay content for reference
-      analysisResult = extractAndParseJson(cleanedResponse, essay);
+      // First, try to find a JSON array in the response
+      let jsonMatch = cleanedResponse.match(/\[\s*\{.*\}\s*\]/s);
+      
+      if (!jsonMatch) {
+        // If no array found, try to extract individual JSON objects
+        const jsonObjects = cleanedResponse.match(/\{[^\{\}]*\}/gs) || [];
+        if (jsonObjects.length > 0) {
+          jsonMatch = `[${jsonObjects.join(',')}]`;
+        }
+      }
+      
+      if (jsonMatch) {
+        try {
+          const parsedResponse = JSON.parse(jsonMatch[0]);
+          if (Array.isArray(parsedResponse) && parsedResponse.length > 0) {
+            // Map the parsed response to our expected format
+            analysisResult = {
+              relevanceReport: parsedResponse.map((item: any) => ({
+                paragraph: typeof item.paragraph === 'number' ? item.paragraph : 0,
+                originalText: typeof item.originalText === 'string' ? item.originalText : '',
+                status: getStatusEmoji(item.status || 'Needs Improvement'),
+                feedback: typeof item.feedback === 'string' ? item.feedback : 'No feedback provided.',
+                suggestion: Array.isArray(item.suggestions) && item.suggestions.length > 0 
+                  ? item.suggestions[0] 
+                  : 'No specific suggestions provided.',
+                issues: [],
+                improvedParagraph: autoFix && typeof item.improvedParagraph === 'string' 
+                  ? item.improvedParagraph 
+                  : null
+              }))
+            };
+          }
+        } catch (e) {
+          console.error('[AnalyzeParagraphRelevance] Error parsing JSON response:', e);
+        }
+      }
+      
+      // Fallback if JSON parsing failed
+      if (!analysisResult) {
+        console.error('[AnalyzeParagraphRelevance] Falling back to extractAndParseJson');
+        analysisResult = extractAndParseJson(cleanedResponse, essay);
+      }
       
       if (!analysisResult) {
         console.error('[AnalyzeParagraphRelevance] Failed to parse AI response as JSON');

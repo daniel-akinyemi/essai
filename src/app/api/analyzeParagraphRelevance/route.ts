@@ -452,13 +452,16 @@ Example:
         .trim();
       
       // First, try to find a JSON array in the response
-      let jsonMatch = cleanedResponse.match(/\[\s*\{.*\}\s*\]/s);
+      const jsonArrayMatch = cleanedResponse.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      let jsonMatch: RegExpMatchArray | null = jsonArrayMatch;
       
-      if (!jsonMatch) {
+      if (!jsonMatch || !jsonMatch[0]) {
         // If no array found, try to extract individual JSON objects
-        const jsonObjects = cleanedResponse.match(/\{[^\{\}]*\}/gs) || [];
+        const jsonObjects = cleanedResponse.match(/\{[^\{\}]*\}/g) || [];
         if (jsonObjects.length > 0) {
-          jsonMatch = `[${jsonObjects.join(',')}]`;
+          // Create a new match array with the joined objects
+          const joinedJson = `[${jsonObjects.join(',')}]`;
+          jsonMatch = [joinedJson] as unknown as RegExpMatchArray;
         }
       }
       
@@ -468,10 +471,10 @@ Example:
           if (Array.isArray(parsedResponse) && parsedResponse.length > 0) {
             // Map the parsed response to our expected format
             analysisResult = {
-              relevanceReport: parsedResponse.map((item: any) => ({
+              relevanceReport: parsedResponse.map((item: any): ParagraphAnalysis => ({
                 paragraph: typeof item.paragraph === 'number' ? item.paragraph : 0,
                 originalText: typeof item.originalText === 'string' ? item.originalText : '',
-                status: getStatusEmoji(item.status || 'Needs Improvement'),
+                status: getStatusEmoji(item.status || 'Needs Improvement') as '✅ On-topic' | '🟡 Needs Improvement' | '❌ Off-topic',
                 feedback: typeof item.feedback === 'string' ? item.feedback : 'No feedback provided.',
                 suggestion: Array.isArray(item.suggestions) && item.suggestions.length > 0 
                   ? item.suggestions[0] 
